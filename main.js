@@ -12,6 +12,9 @@ const gui = new dat.GUI();
 // CANVAS
 const canvas = document.querySelector(".webgl");
 
+// SCENE
+const scene = new THREE.Scene();
+
 //TEXTURES
 const loadingManager = new THREE.LoadingManager();
 
@@ -39,11 +42,11 @@ fontLoader.load("./static/fonts/helvetiker_regular.typeface.json", (font) => {
 		font: font,
 		size: 0.5,
 		height: 0.2,
-		curveSegments: 12,
+		curveSegments: 5,
 		bevelEnabled: true,
 		bevelThickness: 0.03,
 		bevelSize: 0.02,
-		bevelSegments: 5,
+		bevelSegments: 3,
 		bevelOffset: 0,
 	});
 	const textMaterial = new THREE.MeshBasicMaterial({ wireframe: true });
@@ -51,8 +54,10 @@ fontLoader.load("./static/fonts/helvetiker_regular.typeface.json", (font) => {
 	scene.add(textMesh);
 });
 
-// SCENE
-const scene = new THREE.Scene();
+// AXES HELPER
+
+const axesHelper = new THREE.AxesHelper();
+scene.add(axesHelper);
 
 // OBJECTS
 

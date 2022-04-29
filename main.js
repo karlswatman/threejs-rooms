@@ -1,23 +1,116 @@
 import * as THREE from "three";
-import cube from "./cube";
 import gsap from "gsap";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
+
+import * as dat from "dat.gui";
+
+// DEBUG
+const gui = new dat.GUI();
 
 // CANVAS
 const canvas = document.querySelector(".webgl");
 
+//TEXTURES
+const loadingManager = new THREE.LoadingManager();
+
+const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
+
+const textureLoader = new THREE.TextureLoader(loadingManager);
+const texture = textureLoader.load("./static/textures/door/color.jpg");
+
+const environmentMapTexture = cubeTextureLoader.load([
+	"./static/textures/environmentMaps/2/px.jpg",
+	"./static/textures/environmentMaps/2/nx.jpg",
+	"./static/textures/environmentMaps/2/py.jpg",
+	"./static/textures/environmentMaps/2/ny.jpg",
+	"./static/textures/environmentMaps/2/pz.jpg",
+	"./static/textures/environmentMaps/2/nz.jpg",
+]);
+
+// FONTS
+
+const fontLoader = new FontLoader();
+
+fontLoader.load("./static/fonts/helvetiker_regular.typeface.json", (font) => {
+	console.log("font loaded");
+	const textGeometry = new TextGeometry("Karl Swatman", {
+		font: font,
+		size: 0.5,
+		height: 0.2,
+		curveSegments: 12,
+		bevelEnabled: true,
+		bevelThickness: 0.03,
+		bevelSize: 0.02,
+		bevelSegments: 5,
+		bevelOffset: 0,
+	});
+	const textMaterial = new THREE.MeshBasicMaterial({ wireframe: true });
+	const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+	scene.add(textMesh);
+});
+
 // SCENE
 const scene = new THREE.Scene();
 
-// CUBE
-const geometry = new THREE.BoxGeometry(1, 1, 1, 5, 5, 5);
-const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-const mesh = new THREE.Mesh(geometry, material);
-scene.add(mesh);
+// OBJECTS
 
-// AXES HELPER FOR CUBE
-const axes = new THREE.AxesHelper(2);
-scene.add(axes);
+// const material = new THREE.MeshBasicMaterial({
+// 	map: texture,
+// 	// wireframe: true,
+// });
+
+// const material = new THREE.MeshNormalMaterial();
+// const material = new THREE.MeshMatcapMaterial();
+// const material = new THREE.MeshPhongMaterial();
+// material.shininess = 100;
+// material.specular = new THREE.Color("red");
+
+// const material = new THREE.MeshToonMaterial();
+// const material = new THREE.MeshStandardMaterial({});
+// material.envMap = environmentMapTexture;
+// gui.add(material, "metalness", 0, 1, 0.01);
+// gui.add(material, "roughness", 0, 1, 0.01);
+// const sphere = new THREE.Mesh(
+// 	new THREE.SphereBufferGeometry(0.5, 16, 16),
+// 	material
+// );
+
+// sphere.geometry.setAttribute(
+// 	"uv2",
+// 	new THREE.BufferAttribute(sphere.geometry.attributes.uv.array, 2)
+// );
+
+// const plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(1, 1), material);
+
+// plane.geometry.setAttribute(
+// 	"uv2",
+// 	new THREE.BufferAttribute(plane.geometry.attributes.uv.array, 2)
+// );
+// plane.position.x = -2;
+
+// const torus = new THREE.Mesh(
+// 	new THREE.TorusBufferGeometry(0.5, 0.3, 16, 100),
+// 	material
+// );
+
+// torus.geometry.setAttribute(
+// 	"uv2",
+// 	new THREE.BufferAttribute(torus.geometry.attributes.uv.array, 2)
+// );
+
+// torus.position.x = 2;
+// scene.add(sphere, plane, torus);
+
+// LIGHT
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+const pointLight = new THREE.PointLight(0xffffff, 0.5);
+pointLight.position.set(2, 3, 4);
+scene.add(pointLight);
 
 // SIZES
 const sizes = {
@@ -60,19 +153,8 @@ const camera = new THREE.PerspectiveCamera(
 	75,
 	window.innerWidth / window.innerHeight
 );
-// const aspectRatio = sizes.width / sizes.height;
-// const camera = new THREE.OrthographicCamera(
-// 	-1 * aspectRatio,
-// 	1 * aspectRatio,
-// 	1,
-// 	-1,
-// 	0.1,
-// 	100
-// );
-// camera.position.x = 2;
-// camera.position.y = 2;
+
 camera.position.z = 2;
-camera.lookAt(mesh.position);
 scene.add(camera);
 
 // CONTROLS
@@ -95,15 +177,12 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 // 	repeat: -1,
 // });
 
+const clock = new THREE.Clock();
+
 // TICK
 const tick = () => {
+	const elapesedTime = clock.getElapsedTime();
 	//update objects
-	// mesh.rotation.y = elapsedTime;
-	//update camera
-	// camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 3;
-	// camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 3;
-	// camera.position.y = cursor.y * 5;
-	// camera.lookAt(mesh.position);
 
 	// UPDATE CONTROLS
 	controls.update();

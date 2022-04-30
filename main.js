@@ -1,10 +1,22 @@
 import * as THREE from "three";
 import gsap from "gsap";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { FirstPersonControls } from "three/examples/jsm/controls/FirstPersonControls";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
+import { Reflector } from "three/examples/jsm/objects/Reflector.js";
+import { Linear } from "gsap";
 
 import * as dat from "dat.gui";
+
+let mouseX = 0;
+let mouseY = 0;
+
+let targetX = 0;
+let targetY = 0;
+
+const windowHalfX = window.innerWidth / 2;
+const windowHalfY = window.innerHeight / 2;
 
 // DEBUG
 const gui = new dat.GUI();
@@ -22,6 +34,7 @@ const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
 
 const textureLoader = new THREE.TextureLoader(loadingManager);
 const texture = textureLoader.load("./static/textures/door/color.jpg");
+const matcapTexture = textureLoader.load("./static/textures/matcaps/7.png");
 
 const environmentMapTexture = cubeTextureLoader.load([
 	"./static/textures/environmentMaps/2/px.jpg",
@@ -36,6 +49,8 @@ const environmentMapTexture = cubeTextureLoader.load([
 
 const fontLoader = new FontLoader();
 
+const donutGeometry = new THREE.TorusBufferGeometry(0.3, 0.2, 64, 64);
+
 fontLoader.load("./static/fonts/helvetiker_regular.typeface.json", (font) => {
 	console.log("font loaded");
 	const textGeometry = new TextGeometry("Karl Swatman", {
@@ -49,22 +64,68 @@ fontLoader.load("./static/fonts/helvetiker_regular.typeface.json", (font) => {
 		bevelSegments: 3,
 		bevelOffset: 0,
 	});
-	const textMaterial = new THREE.MeshBasicMaterial({ wireframe: true });
-	const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+	textGeometry.center();
+	const material = new THREE.MeshNormalMaterial({});
+	material.flatShading = false;
+	const textMesh = new THREE.Mesh(textGeometry, material);
 	scene.add(textMesh);
+
+	const nextTextGeom = new TextGeometry("Creative Developer", {
+		font: font,
+		size: 0.5,
+		height: 0.2,
+		curveSegments: 5,
+		bevelEnabled: true,
+		bevelThickness: 0.03,
+		bevelSize: 0.02,
+		bevelSegments: 3,
+		bevelOffset: 0,
+	});
+	nextTextGeom.center();
+
+	const nextTextMesh = new THREE.Mesh(nextTextGeom, material);
+	nextTextMesh.position.set(0, -0.8, 0);
+
+	scene.add(nextTextMesh);
+
+	// Donuts
+
+	console.time("donut");
+	for (let i = 0; i < 250; i++) {
+		const donut = new THREE.Mesh(donutGeometry, material);
+
+		donut.position.x = (Math.random() - 0.5) * 15;
+		donut.position.y = (Math.random() - 0.5) * 15;
+		donut.position.z = (Math.random() - 0.5) * 15;
+		donut.rotation.x = Math.random() * Math.PI;
+		donut.rotation.y = Math.random() * Math.PI;
+		const scale = Math.random();
+		donut.scale.set(scale, scale, scale);
+
+		scene.add(donut);
+	}
+	console.timeEnd("donut");
 });
 
 // AXES HELPER
 
-const axesHelper = new THREE.AxesHelper();
-scene.add(axesHelper);
+// const axesHelper = new THREE.AxesHelper();
+// scene.add(axesHelper);
 
 // OBJECTS
-
-// const material = new THREE.MeshBasicMaterial({
-// 	map: texture,
-// 	// wireframe: true,
-// });
+const geometry = new THREE.PlaneGeometry(10, 10);
+const groundMirror = new Reflector(geometry, {
+	clipBias: 0.003,
+	textureWidth: 512,
+	textureHeight: 512,
+	color: 0x77,
+	reverse: true,
+});
+groundMirror.position.z = -0.4;
+groundMirror.position.y = -1.16;
+// groundMirror.rotateZ = 4;
+groundMirror.rotateX(-Math.PI / 2);
+scene.add(groundMirror);
 
 // const material = new THREE.MeshNormalMaterial();
 // const material = new THREE.MeshMatcapMaterial();
@@ -87,13 +148,10 @@ scene.add(axesHelper);
 // 	new THREE.BufferAttribute(sphere.geometry.attributes.uv.array, 2)
 // );
 
-// const plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(1, 1), material);
-
 // plane.geometry.setAttribute(
 // 	"uv2",
 // 	new THREE.BufferAttribute(plane.geometry.attributes.uv.array, 2)
 // );
-// plane.position.x = -2;
 
 // const torus = new THREE.Mesh(
 // 	new THREE.TorusBufferGeometry(0.5, 0.3, 16, 100),
@@ -131,6 +189,7 @@ window.addEventListener("resize", () => {
 	camera.aspect = sizes.width / sizes.height;
 	camera.updateProjectionMatrix();
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+	controls.handleResize();
 });
 
 //FULLSCREEN
@@ -159,12 +218,30 @@ const camera = new THREE.PerspectiveCamera(
 	window.innerWidth / window.innerHeight
 );
 
-camera.position.z = 2;
+camera.position.z = 5;
 scene.add(camera);
+
+// document.addEventListener("mousemove", onDocumentMouseMove);
+
+// function onDocumentMouseMove(event) {
+// 	mouseX = (event.clientX - windowHalfX) * 0.005;
+// 	mouseY = (event.clientY - windowHalfY) * 0.005;
+// }
 
 // CONTROLS
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
+// scene.add(controls);
+// const controls = new FirstPersonControls(camera, canvas);
+// // controls.enableDamping = true;
+// // controls.lookSpeed = 0.0125;
+// controls.movementSpeed = 1;
+// controls.noFly = true;
+// // controls.lookVertical = false;
+// // controls.constrainVertical = true;
+// controls.verticalMax = 0;
+
+// controls.lookAt(new THREE.Vector3(0, 0, 0));
 
 // RENDERER
 const renderer = new THREE.WebGLRenderer({
@@ -187,10 +264,16 @@ const clock = new THREE.Clock();
 // TICK
 const tick = () => {
 	const elapesedTime = clock.getElapsedTime();
+	// camera.position.x += (mouseX - camera.position.x) * 0.05;
+	// camera.position.y += (-mouseY - camera.position.y) * 0.05;
+
+	// camera.lookAt(new THREE.Vector3(0, 0, 0));
 	//update objects
 
 	// UPDATE CONTROLS
+	const delta = clock.getDelta();
 	controls.update();
+	// camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 	// RENDER
 	renderer.render(scene, camera);

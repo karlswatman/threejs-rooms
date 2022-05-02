@@ -6,8 +6,10 @@ import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import { Reflector } from "three/examples/jsm/objects/Reflector.js";
 import { Linear } from "gsap";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import * as dat from "dat.gui";
+import { Plane } from "three";
 
 let mouseX = 0;
 let mouseY = 0;
@@ -26,22 +28,44 @@ const canvas = document.querySelector(".webgl");
 
 // SCENE
 const scene = new THREE.Scene();
-// scene.background = new THREE.Color(0xffffff);
+scene.background = new THREE.Color(0x0);
 const sceneColor = {
-	color: 0xffffff,
+	color: 0x0,
 };
-scene.fog = new THREE.Fog(sceneColor.color, 15, 15);
+// scene.fog = new THREE.Fog(sceneColor.color, 15, 15);
 gui.addColor(sceneColor, "color").onChange((value) => {
 	scene.background = new THREE.Color(value);
 });
+
+// MODELS
+const loader = new GLTFLoader();
+
+loader.load(
+	"./static/textures/untitled.glb",
+	function (gltf) {
+		console.log(gltf);
+		scene.add(gltf.scene);
+		gltf.scene.scale.set(0.15, 0.15, 0.15);
+		gltf.scene.position.set(2, 7.8, 5);
+		gltf.scene.rotation.set(0, -1.6, 0);
+		// receive shadows
+		gltf.scene.traverse((child) => {
+			if (child.isMesh) {
+				child.castShadow = true;
+			}
+		});
+	},
+	undefined,
+	function (error) {
+		console.error(error);
+	}
+);
 
 //TEXTURES
 
 // create video element
 const video = document.createElement("video");
 video.src = "./vid.mov";
-video.load();
-video.play();
 
 // create three js video texture
 const videoTexture = new THREE.VideoTexture(video);
@@ -55,6 +79,12 @@ const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
 
 const textureLoader = new THREE.TextureLoader(loadingManager);
 const texture = textureLoader.load("./static/textures/door/color.jpg");
+const floorTexture = textureLoader.load(
+	"./static/textures/floor/imperfect.jpg"
+);
+
+floorTexture.wrapS = THREE.RepeatWrapping;
+floorTexture.wrapY = THREE.RepeatWrapping;
 const matcapTexture = textureLoader.load("./static/textures/matcaps/7.png");
 
 const environmentMapTexture = cubeTextureLoader.load([
@@ -149,14 +179,16 @@ fontLoader.load("./static/fonts/helvetiker_regular.typeface.json", (font) => {
 // scene.add(axesHelper);
 
 // OBJECTS
-const geometry = new THREE.PlaneGeometry(10, 10);
+const geometry = new THREE.CircleGeometry(10, 32);
 const groundMirror = new Reflector(geometry, {
-	clipBias: 0.02,
+	clipBias: 0.01,
 	textureWidth: window.innerWidth * window.devicePixelRatio,
 	textureHeight: window.innerHeight * window.devicePixelRatio,
-	color: 0x0,
-	envMap: environmentMapTexture,
-	reflectivity: 0.5,
+	// color: 0x0,
+	// envMap: environmentMapTexture,
+	// map: floorTexture,
+	// // reflectivity: 0.5,
+	// clearColor: 0x000000,
 });
 
 // groundMirror.position.z = -0.4;
@@ -196,8 +228,36 @@ gui.addColor(color, "color").onChange((value) => {
 gui.add(material, "metalness", 0, 1);
 gui.add(material, "roughness", 0, 1);
 
-const mirrorPlaneShade = new THREE.BoxBufferGeometry(10, 10, 10);
-const mirrorShadeMaterial = new THREE.MeshStandardMaterial({});
+const mirrorPlaneShade = new THREE.CircleGeometry(10, 32);
+floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+floorTexture.repeat.set(30, 30);
+floorTexture.anisotropy = 16;
+floorTexture.encoding = THREE.sRGBEncoding;
+const mirrorShadeMaterial = new THREE.MeshStandardMaterial({
+	transparent: true,
+	opacity: 0.85,
+	side: THREE.DoubleSide,
+	// color: 0xffffff,
+	// depthTest: true,
+	// depthWrite: false,
+	map: floorTexture,
+});
+
+const mirrorShadeColor = {
+	color: 0xffffff,
+};
+gui.addFolder("mirror shade");
+gui.add(mirrorShadeMaterial, "opacity", 0, 1, 0.01);
+gui.addColor(mirrorShadeColor, "color").onChange((value) => {
+	mirrorShadeMaterial.color.set(value);
+});
+
+const mirrorPlane = new THREE.Mesh(mirrorPlaneShade, mirrorShadeMaterial);
+mirrorPlane.rotateX(-Math.PI / 2);
+mirrorPlane.position.y = 8.15;
+mirrorPlane.position.z = 8.4;
+mirrorPlane.receiveShadow = true;
+scene.add(mirrorPlane);
 // material.side = THREE.FrontSide;
 
 // const material = new THREE.MeshMatcapMaterial();
@@ -249,12 +309,40 @@ const box2Material = new THREE.MeshBasicMaterial({
 
 	// side: THREE.FrontSide,s
 });
+const light = new THREE.SpotLight(0xffffff, 8);
+light.position.set(0, 10, 7);
+light.castShadow = true;
+//Set up shadow properties for the light
+light.shadow.mapSize.width = 1024; // default
+light.shadow.mapSize.height = 1024; // default
+light.shadow.camera.near = 0.5; // default
+light.shadow.camera.far = 200; // default
+light.angle = Math.PI / 2.5;
+light.penumbra = 0.5;
+light.shadow.camera.fov = 75;
+scene.add(light);
+
+// light helper
+const lightHelper = new THREE.SpotLightHelper(light, 2);
+scene.add(lightHelper);
 
 const box2 = new THREE.BoxBufferGeometry(1, 1, 1);
 const boxMesh2 = new THREE.Mesh(box, box2Material);
-boxMesh2.position.set(0, 9, 7);
-boxMesh2.scale.set(4, 1.7, 1);
+boxMesh2.scale.set(8, 3.5, 0.1);
+boxMesh2.position.set(0, 10, 7);
 scene.add(boxMesh2);
+
+const personMaterial = new THREE.MeshNormalMaterial({
+	// color: 0xffffff,
+});
+
+const person = new THREE.BoxBufferGeometry(1, 1, 1);
+const personMesh = new THREE.Mesh(box, personMaterial);
+personMesh.scale.set(0.1, 0.5, 0.1);
+personMesh.position.set(0, 9, 6);
+personMesh.castShadow = true; //default is false
+personMesh.receiveShadow = false; //default
+scene.add(personMesh);
 
 // LIGHT
 
@@ -350,6 +438,7 @@ function onDocumentMouseMove(event) {
 const controls = new OrbitControls(camera, canvas);
 
 controls.enableDamping = true;
+controls.zoomSpeed = 0.2;
 // scene.add(controls);
 // const controls = new FirstPersonControls(camera, canvas);
 // // controls.enableDamping = true;
@@ -369,6 +458,8 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 
 // ANIMATIONS
 
@@ -381,22 +472,63 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 const clock = new THREE.Clock();
 //EVENTS
+let keyPressed = false;
 document.addEventListener("keydown", (event) => {
 	if (event.key === "Enter") {
-		controls.target.set(groundMirror.position.x, 8, groundMirror.position.z);
-		gsap.to(camera.rotation, {
-			duration: 0.1,
-			y: Math.PI,
-			// delay: 1,
-			// repeat: -1,
-			ease: "power3.inOut",
+		keyPressed = true;
+		video.load();
+		video.play();
+		// controls.target.set(groundMirror.position.x, 8, groundMirror.position.z);
+		gsap.to(controls.target, {
+			duration: 1,
+			x: groundMirror.position.x,
+			y: 8,
+			z: groundMirror.position.z,
 		});
-		gsap.to(camera.position, {
-			duration: 0.1,
-			y: 8.5,
-			// delay: 1,
-		});
+		// gsap.to(camera.rotation, {
+		// 	duration: 10,
+		// 	y: Math.PI,
+
+		// 	// delay: 1,
+		// 	// repeat: -1,
+		// 	ease: "power3.inOut",
+		// });
+		gsap
+			.to(camera.position, {
+				duration: 1,
+				y: 8.5,
+				z: 3.5,
+				x: 0,
+				// delay: 1,
+			})
+			.then(() => {
+				// controls.update();
+				keyPressed = false;
+			});
 		// camera.lookAt(new THREE.Vector3(10, 10, 10));
+	}
+
+	if (event.key === "Backspace" && keyPressed === false) {
+		keyPressed = true;
+		video.pause();
+		gsap.to(controls.target, {
+			duration: 1,
+			x: 0,
+			y: 0,
+			z: 0,
+		});
+
+		gsap
+			.to(camera.position, {
+				duration: 1,
+				y: 0,
+				z: 4,
+				x: 0,
+				// delay: 1,
+			})
+			.then(() => {
+				keyPressed = false;
+			});
 	}
 
 	// camera.lookAt(new THREE.Vector3(10, 10, 10));
@@ -405,10 +537,7 @@ document.addEventListener("keydown", (event) => {
 // TICK
 const tick = () => {
 	const elapesedTime = clock.getElapsedTime();
-	// camera.position.x = mouseX;
-	// camera.position.y = mouseY;
 
-	// camera.lookAt(new THREE.Vector3(0, 0, 0));
 	//update objects
 	pointLight.position.x = Math.sin(elapesedTime * 0.3) * 1;
 	pointLight.position.y = Math.cos(elapesedTime * 0.7) * 4;

@@ -357,7 +357,7 @@ for (let i = 0; i < 15; i++) {
 
 const sphere = new THREE.SphereGeometry(0.1, 8, 8);
 
-const pointLight = new THREE.PointLight(0xff0040, 2);
+const pointLight = new THREE.PointLight(0xff0040, 2, 10);
 pointLight.add(
 	new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xff0040 }))
 );
@@ -365,19 +365,19 @@ pointLight.add(
 
 scene.add(pointLight);
 
-const light2 = new THREE.PointLight(0x0040ff, 2);
+const light2 = new THREE.PointLight(0x0040ff, 2, 10);
 light2.add(
 	new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0x0040ff }))
 );
 scene.add(light2);
 
-const light3 = new THREE.PointLight(0x80ff80, 2);
+const light3 = new THREE.PointLight(0x80ff80, 2, 10);
 light3.add(
 	new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0x80ff80 }))
 );
 scene.add(light3);
 
-const light4 = new THREE.PointLight(0xffaa00, 2);
+const light4 = new THREE.PointLight(0xffaa00, 2, 10);
 light4.add(
 	new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffaa00 }))
 );

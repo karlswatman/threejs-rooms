@@ -334,21 +334,24 @@ const videoBoxFolder = gui.addFolder("video box");
 videoBoxFolder.add(boxMesh2.position, "y", 0, 15, 0.01);
 scene.add(boxMesh2);
 
-const personMaterial = new THREE.MeshNormalMaterial({
+const personMaterial = new THREE.MeshStandardMaterial({
 	// color: 0xffffff,
 });
 
-const person = new THREE.BoxBufferGeometry(1, 1, 1);
-const personMesh = new THREE.Mesh(box, personMaterial);
-personMesh.scale.set(0.1, 0.5, 0.1);
-personMesh.position.set(0, 8.403, 6);
 const personFolder = gui.addFolder("person");
-personFolder.add(personMesh.position, "y", 0, 20, 0.001);
-personMesh.castShadow = true; //default is false
-personMesh.receiveShadow = false; //default
+for (let i = 0; i < 15; i++) {
+	const person = new THREE.BoxBufferGeometry(1, 1, 1);
+	const personMesh = new THREE.Mesh(box, personMaterial);
+	const randomX = Math.random() * 10 - 2;
+	const randomY = Math.random() * 10 - 2;
+	personMesh.position.set(randomX, 8.403, randomY);
+	personMesh.scale.set(0.1, 0.5, 0.1);
+	personFolder.add(personMesh.position, "y", 0, 20, 0.001);
+	personMesh.castShadow = true; //default is false
+	personMesh.receiveShadow = false; //default
+	scene.add(personMesh);
+}
 // person axes helper
-
-scene.add(personMesh);
 
 // LIGHT
 

@@ -332,6 +332,7 @@ boxMesh2.scale.set(8, 3.5, 0.1);
 boxMesh2.position.set(0, 9.91, 7);
 const videoBoxFolder = gui.addFolder("video box");
 videoBoxFolder.add(boxMesh2.position, "y", 0, 15, 0.01);
+videoBoxFolder.add(boxMesh2.position, "z", -15, 15, 0.01);
 scene.add(boxMesh2);
 
 const personMaterial = new THREE.MeshStandardMaterial({
@@ -342,7 +343,9 @@ const personFolder = gui.addFolder("person");
 for (let i = 0; i < 15; i++) {
 	const person = new THREE.BoxBufferGeometry(1, 1, 1);
 	const personMesh = new THREE.Mesh(box, personMaterial);
-	const randomX = Math.random() * 10 - 2;
+	// random number between -2 and 2
+	const randomX = Math.random() * 4 - 2;
+
 	const randomY = Math.random() * 10 - 2;
 	personMesh.position.set(randomX, 8.403, randomY);
 	personMesh.scale.set(0.1, 0.5, 0.1);

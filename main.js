@@ -230,12 +230,12 @@ gui.add(material, "roughness", 0, 1);
 
 const mirrorPlaneShade = new THREE.CircleGeometry(10, 32);
 floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-floorTexture.repeat.set(30, 30);
+floorTexture.repeat.set(10, 10);
 floorTexture.anisotropy = 16;
 floorTexture.encoding = THREE.sRGBEncoding;
 const mirrorShadeMaterial = new THREE.MeshStandardMaterial({
 	transparent: true,
-	opacity: 0.85,
+	opacity: 0.77,
 	side: THREE.DoubleSide,
 	// color: 0xffffff,
 	// depthTest: true,
@@ -502,8 +502,8 @@ document.addEventListener("keydown", (event) => {
 		gsap
 			.to(camera.position, {
 				duration: 1,
-				y: 8.5,
-				z: 3.5,
+				y: 9,
+				z: 1,
 				x: 0,
 				// delay: 1,
 			})

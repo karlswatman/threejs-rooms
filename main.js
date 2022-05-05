@@ -7,6 +7,7 @@ import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import { Reflector } from "three/examples/jsm/objects/Reflector.js";
 import { Linear } from "gsap";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
 import * as dat from "dat.gui";
 import { Plane } from "three";
@@ -37,30 +38,6 @@ gui.addColor(sceneColor, "color").onChange((value) => {
 	scene.background = new THREE.Color(value);
 });
 
-// MODELS
-const loader = new GLTFLoader();
-
-loader.load(
-	"./static/textures/untitled.glb",
-	function (gltf) {
-		console.log(gltf);
-		scene.add(gltf.scene);
-		gltf.scene.scale.set(0.15, 0.15, 0.15);
-		gltf.scene.position.set(2, 7.8, 5);
-		gltf.scene.rotation.set(0, -1.6, 0);
-		// receive shadows
-		gltf.scene.traverse((child) => {
-			if (child.isMesh) {
-				child.castShadow = true;
-			}
-		});
-	},
-	undefined,
-	function (error) {
-		console.error(error);
-	}
-);
-
 //TEXTURES
 
 // create video element
@@ -69,11 +46,22 @@ video.src = "./vid.mov";
 
 // create three js video texture
 const videoTexture = new THREE.VideoTexture(video);
-videoTexture.minFilter = THREE.LinearFilter;
-videoTexture.magFilter = THREE.LinearFilter;
+// videoTexture.minFilter = THREE.LinearFilter;
+// videoTexture.magFilter = THREE.LinearFilter;
 // videoTexture.format = THREE.RGBFormat;
 const loadingManager = new THREE.LoadingManager();
 video.loop = true;
+// video.play();
+const videoMaterial = new THREE.MeshBasicMaterial({
+	map: videoTexture,
+	// color: 0xffff,
+});
+
+// MODELS
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath("/examples/js/libs/draco/");
+const loader = new GLTFLoader();
+loader.setDRACOLoader(dracoLoader);
 
 const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
 
@@ -95,6 +83,46 @@ const environmentMapTexture = cubeTextureLoader.load([
 	"./static/textures/environmentMaps/1/pz.jpg",
 	"./static/textures/environmentMaps/1/nz.jpg",
 ]);
+
+// baked texture
+const bakedTexture = new THREE.TextureLoader().load(
+	"./static/textures/baked.005.jpg"
+);
+bakedTexture.flipY = false;
+bakedTexture.encoding = THREE.sRGBEncoding;
+//  baked materials
+const bakedMaterial = new THREE.MeshBasicMaterial({
+	map: bakedTexture,
+	color: 0xffffff,
+});
+
+const tvMaterial = new THREE.MeshBasicMaterial({
+	map: floorTexture,
+	color: 0xffffff,
+});
+
+loader.load(
+	"./static/textures/screens.glb",
+	function (gltf) {
+		console.log(gltf);
+		const screensFolder = gui.addFolder("Screens");
+		scene.add(gltf.scene);
+
+		// receive shadows
+		gltf.scene.traverse((child) => {
+			if (child.name === "Cube001") {
+				console.log(child);
+				child.material = tvMaterial;
+			}
+			child.material = bakedMaterial;
+		});
+		// video.play();
+	},
+	undefined,
+	function (error) {
+		console.error(error);
+	}
+);
 
 // FONTS
 
@@ -312,6 +340,7 @@ const box2Material = new THREE.MeshBasicMaterial({
 const light = new THREE.SpotLight(0xffffff, 8);
 light.position.set(0, 10, 7);
 light.castShadow = true;
+console.log(light);
 //Set up shadow properties for the light
 light.shadow.mapSize.width = 1024; // default
 light.shadow.mapSize.height = 1024; // default
@@ -320,7 +349,7 @@ light.shadow.camera.far = 200; // default
 light.angle = Math.PI / 2.5;
 light.penumbra = 0.5;
 light.shadow.camera.fov = 75;
-scene.add(light);
+// scene.add(light);
 
 // light helper
 const lightHelper = new THREE.SpotLightHelper(light, 2);
@@ -334,6 +363,38 @@ const videoBoxFolder = gui.addFolder("video box");
 videoBoxFolder.add(boxMesh2.position, "y", 0, 15, 0.01);
 videoBoxFolder.add(boxMesh2.position, "z", -15, 15, 0.01);
 scene.add(boxMesh2);
+
+const box3Material = new THREE.MeshBasicMaterial({
+	map: videoTexture,
+
+	// side: THREE.FrontSide,s
+});
+const box3Light = new THREE.SpotLight(0xffffff, 2);
+box3Light.position.set(0, 10, 7);
+box3Light.castShadow = true;
+//Set up shadow properties for the box3Light
+box3Light.shadow.mapSize.width = 1024; // default
+box3Light.shadow.mapSize.height = 1024; // default
+box3Light.shadow.camera.near = 0.5; // default
+box3Light.shadow.camera.far = 200; // default
+box3Light.angle = Math.PI / 2.5;
+box3Light.penumbra = 0.5;
+box3Light.shadow.camera.fov = 75;
+// scene.add(box3Light);
+
+// light helper
+const box3lightHelper = new THREE.SpotLightHelper(light, 2);
+scene.add(box3lightHelper);
+
+const box3 = new THREE.BoxBufferGeometry(1, 1, 1);
+const boxMesh3 = new THREE.Mesh(box, box3Material);
+boxMesh3.scale.set(8, 3.5, 0.1);
+boxMesh3.position.set(0, 9.91, 7);
+const videoBoxFolder2 = gui.addFolder("video box 2");
+videoBoxFolder2.add(boxMesh3.position, "y", 0, 15, 0.01);
+videoBoxFolder2.add(boxMesh3.position, "z", -15, 15, 0.01);
+videoBoxFolder2.add(boxMesh3.position, "x", -15, 15, 0.01);
+scene.add(boxMesh3);
 
 const personMaterial = new THREE.MeshStandardMaterial({
 	// color: 0xffffff,
@@ -470,8 +531,7 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+renderer.outputEncoding = THREE.sRGBEncoding;
 
 // ANIMATIONS
 

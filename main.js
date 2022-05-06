@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { fitTexture } from "./fitTexture";
 
 import gsap from "gsap";
 import * as dat from "dat.gui";
@@ -33,16 +34,14 @@ const textureLoader = new THREE.TextureLoader(loadingManager);
 //TEXTURES
 
 // create video element
-const video = document.createElement("video");
+const video = document.querySelector("video");
 video.src = "./vid.mov";
 
 // create three js video texture
 const videoTexture = new THREE.VideoTexture(video);
-
-video.loop = true;
-const videoMaterial = new THREE.MeshBasicMaterial({
-	map: videoTexture,
-});
+videoTexture.minFilter = THREE.LinearFilter;
+videoTexture.magFilter = THREE.LinearFilter;
+videoTexture.format = THREE.RGBAFormat;
 
 // baked texture
 const bakedTexture = new THREE.TextureLoader().load("./static/baked-test.jpg");
@@ -56,40 +55,58 @@ const nameScreenTexture = textureLoader.load(
 const woman10Texture = textureLoader.load("./static/textures/woman10.jpg");
 woman10Texture.flipY = false;
 woman10Texture.encoding = THREE.sRGBEncoding;
+
+const aboutButtonTexture = textureLoader.load(
+	"./static/textures/aboutButton.jpg"
+);
+
 // MATERIALS
 
 //  baked material
 const bakedMaterial = new THREE.MeshBasicMaterial({
-	// map: bakedTexture,
+	map: bakedTexture,
 	color: 0xffff,
 });
 
 // name screen material
 const nameScreenMaterial = new THREE.MeshBasicMaterial({
-	map: nameScreenTexture,
-	side: THREE.DoubleSide,
+	side: THREE.BackSide,
 });
 // woman material
 const woman10Material = new THREE.MeshBasicMaterial({
 	map: woman10Texture,
 });
 
+// about button material
+const aboutButtonMaterial = new THREE.MeshBasicMaterial({
+	map: aboutButtonTexture,
+});
+
 // MODELS
+
 let screen;
+let aboutButton;
+let woman10;
+
 loader.load("./static/screens.glb", (gltf) => {
 	const model = gltf.scene;
 	console.log(model);
+
 	model.traverse((child) => {
 		if (child.isMesh) {
 			child.material = bakedMaterial;
 		}
 	});
-	const woman10 = model.children.find((child) => child.name === "Woman10");
-	woman10.material = woman10Material;
-	screen = model.children.find((child) => child.name === "nameScreen");
 
+	woman10 = model.children.find((child) => child.name === "Woman10");
+	woman10.material = woman10Material;
+
+	screen = model.children.find((child) => child.name === "nameScreen");
 	screen.material = nameScreenMaterial;
-	screen.rotateZ(Math.PI);
+
+	aboutButton = model.children.find((child) => child.name === "Cube");
+	aboutButton.material = aboutButtonMaterial;
+
 	scene.add(model);
 });
 
@@ -127,7 +144,7 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 camera.position.x = 0.6;
-camera.position.z = 3.76;
+camera.position.z = 1;
 camera.position.y = 0.5;
 scene.add(camera);
 
@@ -155,15 +172,31 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 // EVENTS
 
+let channel = 0;
+const clips = ["./pepe.mp4"];
+const videos = ["./vid.mov"];
+
 document.addEventListener("keydown", (event) => {
-	console.log(event.keyCode);
-	bakedMaterial.map = videoTexture;
-	setTimeout(() => {
-		bakedMaterial.map = bakedTexture;
-	}, 5000);
-	bakedMaterial.needsUpdate = true;
-	console.log(screen.material);
+	video.src = "./load.mp4";
+	nameScreenMaterial.map = videoTexture;
+	nameScreenMaterial.needsUpdate = true;
 	video.play();
+	setTimeout(() => {
+		video.src = [clips[channel]];
+		nameScreenMaterial.needsUpdate = true;
+		video.play();
+	}, 1500);
+	setTimeout(() => {
+		video.src = "./load.mp4";
+		nameScreenMaterial.needsUpdate = true;
+		video.play();
+	}, 3000);
+	setTimeout(() => {
+		video.src = videos[channel];
+		nameScreenMaterial.needsUpdate = true;
+		video.play();
+		video.loop = true;
+	}, 4500);
 });
 
 // CLOCK

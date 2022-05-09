@@ -1,8 +1,12 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { fitTexture } from "./fitTexture";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { OutlinePass } from "three/examples/jsm/postprocessing/OutlinePass";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
+import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 
 import gsap from "gsap";
 import * as dat from "dat.gui";
@@ -28,8 +32,12 @@ let targetY = 0;
 
 const windowHalfX = window.innerWidth / 2;
 const windowHalfY = window.innerHeight / 2;
-// raycaster
+
+// RAYCASTER
+
+let intersects;
 const raycaster = new THREE.Raycaster();
+// raycaster for mouse
 const pointer = new THREE.Vector2();
 
 // LOADERS
@@ -55,12 +63,62 @@ const videoTexture = new THREE.VideoTexture(video);
 videoTexture.minFilter = THREE.LinearFilter;
 videoTexture.magFilter = THREE.LinearFilter;
 videoTexture.format = THREE.RGBAFormat;
+videoTexture.flipY = false;
+
+video.src = "./load.mp4";
+video.load();
+video.play();
+video.loop = true;
+video.muted = true;
 
 // baked texture
 const bakedTexture = new THREE.TextureLoader().load("./static/testbake.jpg");
 bakedTexture.flipY = false;
 bakedTexture.encoding = THREE.sRGBEncoding;
 
+const compTexture = new THREE.TextureLoader().load("./static/compbake.jpg");
+compTexture.flipY = false;
+compTexture.encoding = THREE.sRGBEncoding;
+
+const macTexture = new THREE.TextureLoader().load("./static/macbake.jpg");
+macTexture.flipY = false;
+macTexture.encoding = THREE.sRGBEncoding;
+
+const macScreenTexture = new THREE.VideoTexture(video);
+macScreenTexture.minFilter = THREE.LinearFilter;
+macScreenTexture.magFilter = THREE.LinearFilter;
+macScreenTexture.format = THREE.RGBAFormat;
+macScreenTexture.flipY = false;
+
+const screenTwoTexture = new THREE.TextureLoader().load(
+	"./static/scrumBoard.png"
+);
+
+const framesAndTextTexture = new THREE.TextureLoader().load(
+	"./static/framesandtext.jpg"
+);
+framesAndTextTexture.flipY = false;
+framesAndTextTexture.encoding = THREE.sRGBEncoding;
+
+const poster1Texture = new THREE.TextureLoader().load(
+	"./static/isleofdogs.jpeg"
+);
+poster1Texture.flipY = false;
+poster1Texture.encoding = THREE.sRGBEncoding;
+
+const poster2Texture = new THREE.TextureLoader().load("./static/batman.jpeg");
+poster2Texture.flipY = false;
+poster2Texture.encoding = THREE.sRGBEncoding;
+
+const poster3Texture = new THREE.TextureLoader().load("./static/django.jpeg");
+poster3Texture.flipY = false;
+poster3Texture.encoding = THREE.sRGBEncoding;
+
+const poster4Texture = new THREE.TextureLoader().load(
+	"./static/backtothefuture.jpeg"
+);
+poster4Texture.flipY = false;
+poster4Texture.encoding = THREE.sRGBEncoding;
 // MATERIALS
 
 //  baked material
@@ -69,9 +127,13 @@ const bakedMaterial = new THREE.MeshBasicMaterial({
 	color: 0xffffff,
 });
 
-const screenMaterial = new THREE.MeshBasicMaterial({
+const screenOneMaterial = new THREE.MeshBasicMaterial({
 	map: videoTexture,
 	color: 0xffffff,
+});
+
+const screenTwoMaterial = new THREE.MeshBasicMaterial({
+	map: screenTwoTexture,
 });
 
 const nameTextMaterial = new THREE.MeshBasicMaterial({
@@ -80,26 +142,43 @@ const nameTextMaterial = new THREE.MeshBasicMaterial({
 const nameTextColour = {
 	color: 0xffffff,
 };
-const nameTextFolder = gui.addFolder("Name Text");
-nameTextFolder.addColor(nameTextColour, "color").onChange(() => {
-	nameTextMaterial.color.set(nameTextColour.color);
+
+const compMaterial = new THREE.MeshBasicMaterial({
+	map: compTexture,
+	color: 0xffffff,
 });
 
-const continueMaterial = new THREE.MeshBasicMaterial({
-	color: 0x0,
-});
-const continueTextColour = {
-	color: 0x0,
-};
-const continueTextFolder = gui.addFolder("Continue Text");
-continueTextFolder.addColor(continueTextColour, "color").onChange(() => {
-	continueMaterial.color.set(continueTextColour.color);
+const macMaterial = new THREE.MeshBasicMaterial({
+	map: macTexture,
 });
 
+const macScreenMaterial = new THREE.MeshBasicMaterial({
+	map: macScreenTexture,
+});
+
+const framesandtextMaterial = new THREE.MeshBasicMaterial({
+	map: framesAndTextTexture,
+});
+
+const poster1Material = new THREE.MeshBasicMaterial({
+	map: poster1Texture,
+});
+
+const poster2Material = new THREE.MeshBasicMaterial({
+	map: poster2Texture,
+});
+
+const poster3Material = new THREE.MeshBasicMaterial({
+	map: poster3Texture,
+});
+
+const poster4Material = new THREE.MeshBasicMaterial({
+	map: poster4Texture,
+});
 // MODELS
 
 let model;
-
+let continueText;
 loader.load("./static/test.glb", (gltf) => {
 	model = gltf.scene;
 	console.log(model);
@@ -107,21 +186,48 @@ loader.load("./static/test.glb", (gltf) => {
 		child.material = bakedMaterial;
 	});
 
-	// const screen = model.children.find((child) => child.name === "Plane001");
-	// screen.scale.set(4, 0, 1);
-	// screen.material = screenMaterial;
+	const screen = model.children.find((child) => child.name === "screen");
+	screen.material = screenOneMaterial;
 
-	const screen = model.children.find((child) => child.name === "Plane001");
-	screen.material = screenMaterial;
+	const name = model.children.find((child) => child.name === "name");
+	name.material = framesandtextMaterial;
 
-	const nameText = model.children.find((child) => child.name === "Text");
-	const titletext = model.children.find((child) => child.name === "Text001");
-	const continueText = model.children.find((child) => child.name === "Text002");
-	continueText.material = continueMaterial;
-	titletext.material = nameTextMaterial;
-	nameText.material = nameTextMaterial;
+	const nameTitle = model.children.find((child) => child.name === "nameTitle");
+	nameTitle.material = framesandtextMaterial;
+
+	continueText = model.children.find((child) => child.name === "continue");
+	continueText.material = framesandtextMaterial;
+
+	const poster1 = model.children.find((child) => child.name === "poster1");
+	poster1.material = poster1Material;
+
+	const poster2 = model.children.find((child) => child.name === "poster2");
+	poster2.material = poster2Material;
+
+	const poster3 = model.children.find((child) => child.name === "poster3");
+	poster3.material = poster3Material;
+
+	const poster4 = model.children.find((child) => child.name === "poster4");
+	poster4.material = poster4Material;
 
 	scene.add(model);
+});
+
+let comp;
+let mac;
+loader.load("./static/comp.glb", (gltf) => {
+	comp = gltf.scene;
+	comp.traverse((child) => {
+		child.material = compMaterial;
+	});
+	mac = comp.children.find((child) => child.name === "macBook_BottomPart");
+	mac.traverse((child) => {
+		child.material = macMaterial;
+	});
+	const macScreen = comp.children.find((child) => child.name === "macScreen");
+	macScreen.material = macScreenMaterial;
+	comp.position.set(4, 0, 0);
+	scene.add(comp);
 });
 
 // FONTS
@@ -130,22 +236,13 @@ loader.load("./static/test.glb", (gltf) => {
 
 // OBJECTS
 
-// screen
-// const screenGeometry = new THREE.BoxGeometry(20, 10, 0.1);
-// const screenMaterial = new THREE.MeshBasicMaterial({
-// 	map: videoTexture,
-// });
-// const screen = new THREE.Mesh(screenGeometry, screenMaterial);
-// screen.position.set(-1, 4.5, -8.6);
-// screen.scale.set(0.8, 0.9, 1);
-// const screenFolder = gui.addFolder("Screen");
-// screenFolder.add(screen.position, "x", -10, 10);
-// screenFolder.add(screen.position, "y", -10, 10);
-// screenFolder.add(screen.position, "z", -10, 10);
-// screenFolder.add(screen.scale, "x", 0, 10, 0.1);
-// screenFolder.add(screen.scale, "y", 0, 10, 0.1);
-// screenFolder.add(screen.scale, "z", 0, 10, 0.1);
-// scene.add(screen);
+const screenTwoGeometry = new THREE.BoxGeometry(1, 1, 0.1);
+
+const screenTwo = new THREE.Mesh(screenTwoGeometry, screenTwoMaterial);
+screenTwo.position.set(4.016, 0.8, -0.21);
+
+screenTwo.scale.set(3.2, 1.81, 1);
+scene.add(screenTwo);
 
 // LIGHT
 
@@ -163,7 +260,6 @@ window.addEventListener("resize", () => {
 	camera.aspect = sizes.width / sizes.height;
 	camera.updateProjectionMatrix();
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-	// controls.handleResize();
 });
 
 //FULLSCREEN
@@ -174,8 +270,7 @@ const camera = new THREE.PerspectiveCamera(
 	window.innerWidth / window.innerHeight
 );
 
-camera.position.set(1, 1, 4);
-// camera.rotation.set(0.4, 0, 0);
+camera.position.set(0, 1.2, 4);
 
 const cameraFolder = gui.addFolder("Camera");
 cameraFolder.add(camera.position, "x", -10, 10);
@@ -186,11 +281,11 @@ cameraFolder.add(camera.rotation, "y", -10, 10, 0.1);
 cameraFolder.add(camera.rotation, "z", -10, 10, 0.1);
 scene.add(camera);
 
-// CONTROLS
-const controls = new OrbitControls(camera, canvas);
+// CONTROLS;
+// const controls = new OrbitControls(camera, canvas);
 
-controls.enableDamping = true;
-controls.enablePan = false;
+// controls.enableDamping = true;
+// controls.enablePan = false;
 // controls.enableZoom = false;
 // controls.minPolarAngle = Math.PI / 5;
 // controls.maxPolarAngle = Math.PI / 2 - 0.1;
@@ -207,40 +302,85 @@ renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 
+// POST PROCESSING
+
+function checkIntersection() {
+	// RAYCASTER
+
+	// update the picking ray with the camera and pointer position
+	raycaster.setFromCamera(pointer, camera);
+
+	// calculate objects intersecting the picking ray
+	intersects = raycaster.intersectObjects(scene.children, true);
+
+	if (intersects.find((intersect) => intersect.object.name === "continue")) {
+		continueText.material = new THREE.MeshBasicMaterial({
+			transparent: true,
+			opacity: 0.5,
+			color: 0xffffff,
+		});
+	} else {
+		if (continueText) continueText.material = framesandtextMaterial;
+	}
+
+	if (mac) {
+		const macIntersects = raycaster.intersectObjects(mac.children);
+
+		if (macIntersects.length > 0) {
+			macMaterial.map = null;
+			macMaterial.needsUpdate = true;
+		} else {
+			macMaterial.map = macTexture;
+			macMaterial.needsUpdate = true;
+		}
+	}
+}
+
 // ANIMATIONS
+
+const toSecondScene = () => {
+	gsap
+		.to(camera.position, {
+			duration: 1,
+			x: 4,
+			y: 1.34,
+			ease: "power3.inOut",
+		})
+		.then(() => {
+			gsap.to(camera.position, {
+				duration: 1,
+				z: 3.5,
+				ease: "power3.inOut",
+			});
+		});
+};
 
 // EVENTS
 
 // change channel
-let channel = 0;
-let keyPressed = false;
-const clips = ["./pepe.mp4"];
-const videos = ["./vid.mov"];
 
 document.addEventListener("keydown", (event) => {
-	if (!keyPressed) {
-		keyPressed = true;
-		video.src = "./load.mp4";
-		video.play();
-		setTimeout(() => {
-			video.src = [clips[channel]];
-			console.log(video);
-
-			video.play();
-		}, 1500);
-		setTimeout(() => {
-			video.src = "./load.mp4";
-
-			video.play();
-		}, 3000);
-		setTimeout(() => {
-			video.src = videos[channel];
-
-			video.play();
-			video.loop = true;
-			keyPressed = false;
-		}, 4500);
+	if (event.key === "ArrowLeft") {
+		gsap
+			.to(camera.position, {
+				duration: 1,
+				z: 4,
+				ease: "power3.inOut",
+			})
+			.then(() => {
+				gsap.to(camera.position, {
+					duration: 1,
+					x: 0,
+					y: 1.2,
+					ease: "power3.inOut",
+				});
+			});
 	}
+});
+
+document.addEventListener("mousedown", (event) => {
+	if (intersects.find((intersect) => intersect.object.name === "continue"))
+		toSecondScene();
 });
 
 // track mouse x y
@@ -250,6 +390,7 @@ document.addEventListener("mousemove", (event) => {
 
 	pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
 	pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	checkIntersection();
 });
 
 // CLOCK
@@ -261,35 +402,23 @@ const tick = () => {
 	const elapesedTime = clock.getElapsedTime();
 
 	// ROTATE SCENE
-	targetX = mouseX * 0.0002;
-	targetY = mouseY * 0.0001;
+	targetX = mouseX * 0.00003;
+	targetY = mouseY * 0.00003;
 
 	if (model) {
 		model.rotation.y += 0.05 * (targetX - model.rotation.y);
 		model.rotation.x += 0.05 * (targetY - model.rotation.x);
 	}
-
-	// RAYCASTER
-
-	// update the picking ray with the camera and pointer position
-	raycaster.setFromCamera(pointer, camera);
-
-	// calculate objects intersecting the picking ray
-	const intersects = raycaster.intersectObjects(scene.children);
-
-	for (let i = 0; i < intersects.length; i++) {
-		if (intersects.find((intersect) => intersect.object.name === "Text002")) {
-			continueMaterial.color.set(0xffffff);
-		} else {
-			continueMaterial.color.set(0x000000);
-		}
+	if (comp) {
+		comp.rotation.y += 0.05 * (targetX - comp.rotation.y);
+		comp.rotation.x += 0.05 * (targetY - comp.rotation.x);
 	}
 
 	// UPDATE OBJECTS
 
 	// UPDATE CONTROLS
 	const delta = clock.getDelta();
-	controls.update();
+	// controls.update();
 
 	// RENDER
 	renderer.render(scene, camera);

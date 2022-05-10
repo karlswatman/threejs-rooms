@@ -1,12 +1,9 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
-import { OutlinePass } from "three/examples/jsm/postprocessing/OutlinePass";
-import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
-import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import * as CANNON from "cannon-es";
+import CannonDebugger from "cannon-es-debugger";
 
 import gsap from "gsap";
 import * as dat from "dat.gui";
@@ -67,11 +64,13 @@ videoTexture.flipY = false;
 
 video.src = "./load.mp4";
 video.load();
-video.play();
 video.loop = true;
 video.muted = true;
-
-// baked texture
+// instruction text for first scene tv screen
+const instructionsTexture = textureLoader.load("./static/Drawing.jpeg");
+instructionsTexture.flipY = false;
+instructionsTexture.encoding = THREE.sRGBEncoding;
+// baked texture for first scene
 const bakedTexture = new THREE.TextureLoader().load("./static/testbake.jpg");
 bakedTexture.flipY = false;
 bakedTexture.encoding = THREE.sRGBEncoding;
@@ -119,6 +118,7 @@ const poster4Texture = new THREE.TextureLoader().load(
 );
 poster4Texture.flipY = false;
 poster4Texture.encoding = THREE.sRGBEncoding;
+
 // MATERIALS
 
 //  baked material
@@ -128,7 +128,7 @@ const bakedMaterial = new THREE.MeshBasicMaterial({
 });
 
 const screenOneMaterial = new THREE.MeshBasicMaterial({
-	map: videoTexture,
+	map: instructionsTexture,
 	color: 0xffffff,
 });
 
@@ -175,10 +175,15 @@ const poster3Material = new THREE.MeshBasicMaterial({
 const poster4Material = new THREE.MeshBasicMaterial({
 	map: poster4Texture,
 });
+
 // MODELS
 
 let model;
 let continueText;
+let continueTextSize;
+let name;
+let nameTitle;
+let screen;
 loader.load("./static/test.glb", (gltf) => {
 	model = gltf.scene;
 	console.log(model);
@@ -186,17 +191,29 @@ loader.load("./static/test.glb", (gltf) => {
 		child.material = bakedMaterial;
 	});
 
-	const screen = model.children.find((child) => child.name === "screen");
+	screen = model.children.find((child) => child.name === "screen");
 	screen.material = screenOneMaterial;
 
-	const name = model.children.find((child) => child.name === "name");
+	name = model.children.find((child) => child.name === "name");
 	name.material = framesandtextMaterial;
 
-	const nameTitle = model.children.find((child) => child.name === "nameTitle");
+	nameTitle = model.children.find((child) => child.name === "nameTitle");
 	nameTitle.material = framesandtextMaterial;
 
 	continueText = model.children.find((child) => child.name === "continue");
 	continueText.material = framesandtextMaterial;
+
+	const frame1 = model.children.find((child) => child.name === "frame1");
+	frame1.material = framesandtextMaterial;
+
+	const frame2 = model.children.find((child) => child.name === "frame2");
+	frame2.material = framesandtextMaterial;
+
+	const frame3 = model.children.find((child) => child.name === "frame3");
+	frame3.material = framesandtextMaterial;
+
+	const frame4 = model.children.find((child) => child.name === "frame4");
+	frame4.material = framesandtextMaterial;
 
 	const poster1 = model.children.find((child) => child.name === "poster1");
 	poster1.material = poster1Material;
@@ -236,13 +253,58 @@ loader.load("./static/comp.glb", (gltf) => {
 
 // OBJECTS
 
-const screenTwoGeometry = new THREE.BoxGeometry(1, 1, 0.1);
+// PHYSICS
+const world = new CANNON.World();
+world.gravity.set(0, -9.8, 0);
+const cannonDebugger = new CannonDebugger(scene, world);
 
-const screenTwo = new THREE.Mesh(screenTwoGeometry, screenTwoMaterial);
-screenTwo.position.set(4.016, 0.8, -0.21);
+// materials
+const defaultMaterial = new CANNON.Material("default");
 
-screenTwo.scale.set(3.2, 1.81, 1);
-scene.add(screenTwo);
+const defaultContactMaterial = new CANNON.ContactMaterial(
+	defaultMaterial,
+	defaultMaterial,
+	{
+		friction: 0.1,
+		restitution: 0.2,
+	}
+);
+
+world.addContactMaterial(defaultContactMaterial);
+world.defaultContactMaterial = defaultContactMaterial;
+
+// continue text
+const continueTextShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.1, 0.1));
+const continueTextBody = new CANNON.Body({
+	mass: 1,
+
+	position: new CANNON.Vec3(0.4, 0.57, 2.9),
+	shape: continueTextShape,
+});
+continueTextBody.mass = 0;
+
+world.addBody(continueTextBody);
+
+// name text
+const nameTextShape = new CANNON.Box(new CANNON.Vec3(1, 0.2, 0.1));
+const nameTextBody = new CANNON.Body({
+	mass: 1,
+	position: new CANNON.Vec3(-0.09, 1.3, 2.9),
+	shape: nameTextShape,
+});
+nameTextBody.mass = 0;
+nameTextBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), 1);
+
+world.addBody(nameTextBody);
+
+// floor
+const floorShape = new CANNON.Plane();
+const floorBody = new CANNON.Body({
+	mass: 0,
+	shape: floorShape,
+});
+floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI / 2);
+world.addBody(floorBody);
 
 // LIGHT
 
@@ -270,7 +332,8 @@ const camera = new THREE.PerspectiveCamera(
 	window.innerWidth / window.innerHeight
 );
 
-camera.position.set(0, 1.2, 4);
+camera.position.set(0, 1.6, 4);
+camera.rotation.x = -0.4;
 
 const cameraFolder = gui.addFolder("Camera");
 cameraFolder.add(camera.position, "x", -10, 10);
@@ -282,16 +345,9 @@ cameraFolder.add(camera.rotation, "z", -10, 10, 0.1);
 scene.add(camera);
 
 // CONTROLS;
-// const controls = new OrbitControls(camera, canvas);
+const controls = new OrbitControls(camera, canvas);
 
-// controls.enableDamping = true;
-// controls.enablePan = false;
-// controls.enableZoom = false;
-// controls.minPolarAngle = Math.PI / 5;
-// controls.maxPolarAngle = Math.PI / 2 - 0.1;
-// controls.minAzimuthAngle = -Math.PI / 4; // radians
-// controls.maxAzimuthAngle = Math.PI / 4; // radians
-// controls.target.set(0, 1, 0);
+controls.enableDamping = true;
 
 // RENDERER
 const renderer = new THREE.WebGLRenderer({
@@ -303,10 +359,9 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 
 // POST PROCESSING
+// RAYCASTER
 
 function checkIntersection() {
-	// RAYCASTER
-
 	// update the picking ray with the camera and pointer position
 	raycaster.setFromCamera(pointer, camera);
 
@@ -327,10 +382,11 @@ function checkIntersection() {
 		const macIntersects = raycaster.intersectObjects(mac.children);
 
 		if (macIntersects.length > 0) {
-			macMaterial.map = null;
+			macMaterial.transparent = true;
+			macMaterial.opacity = 0.8;
 			macMaterial.needsUpdate = true;
 		} else {
-			macMaterial.map = macTexture;
+			macMaterial.transparent = false;
 			macMaterial.needsUpdate = true;
 		}
 	}
@@ -341,6 +397,7 @@ function checkIntersection() {
 const toSecondScene = () => {
 	gsap
 		.to(camera.position, {
+			delay: 3,
 			duration: 1,
 			x: 4,
 			y: 1.34,
@@ -355,33 +412,54 @@ const toSecondScene = () => {
 		});
 };
 
+const backToFirstScene = () => {
+	gsap
+		.to(camera.position, {
+			duration: 1,
+			z: 4,
+			ease: "power3.inOut",
+		})
+		.then(() => {
+			gsap.to(camera.position, {
+				duration: 1,
+				x: 0,
+				y: 1.6,
+				ease: "power3.inOut",
+			});
+		});
+};
+
 // EVENTS
 
 // change channel
-
+let tvOn = false;
 document.addEventListener("keydown", (event) => {
 	if (event.key === "ArrowLeft") {
-		gsap
-			.to(camera.position, {
-				duration: 1,
-				z: 4,
-				ease: "power3.inOut",
-			})
-			.then(() => {
-				gsap.to(camera.position, {
-					duration: 1,
-					x: 0,
-					y: 1.2,
-					ease: "power3.inOut",
-				});
-			});
+		backToFirstScene();
+	}
+	if (event.key === "Enter") {
+		if (tvOn) {
+			screen.material.map = instructionsTexture;
+			video.pause();
+			tvOn = false;
+		} else {
+			screen.material.map = videoTexture;
+			video.play();
+			tvOn = true;
+		}
 	}
 });
 
-document.addEventListener("mousedown", (event) => {
-	if (intersects.find((intersect) => intersect.object.name === "continue"))
-		toSecondScene();
-});
+// turn on mass for text physics on first scene
+
+// document.addEventListener("mousedown", (event) => {
+// 	if (intersects.find((intersect) => intersect.object.name === "continue"))
+// 		continueTextBody.mass = 1;
+// 	continueTextBody.updateMassProperties();
+// 	nameTextBody.mass = 1;
+// 	nameTextBody.updateMassProperties();
+// 	toSecondScene();
+// });
 
 // track mouse x y
 document.addEventListener("mousemove", (event) => {
@@ -395,12 +473,13 @@ document.addEventListener("mousemove", (event) => {
 
 // CLOCK
 const clock = new THREE.Clock();
-
+let oldElapsed = 0;
 // TICK
 const tick = () => {
 	// TIME
-	const elapesedTime = clock.getElapsedTime();
-
+	const elapsedTime = clock.getElapsedTime();
+	const deltaTime = elapsedTime - oldElapsed;
+	oldElapsed = elapsedTime;
 	// ROTATE SCENE
 	targetX = mouseX * 0.00003;
 	targetY = mouseY * 0.00003;
@@ -416,9 +495,20 @@ const tick = () => {
 
 	// UPDATE OBJECTS
 
+	// UPDATE PHYSICS
+	world.step(1 / 60, deltaTime, 3);
+	cannonDebugger.update();
+	if (model) {
+		continueText.position.copy(continueTextBody.position);
+		continueText.quaternion.copy(continueTextBody.quaternion);
+
+		name.position.copy(nameTextBody.position);
+		name.quaternion.copy(nameTextBody.quaternion);
+	}
+
 	// UPDATE CONTROLS
 	const delta = clock.getDelta();
-	// controls.update();
+	controls.update();
 
 	// RENDER
 	renderer.render(scene, camera);

@@ -228,9 +228,10 @@ loader.load("./static/test.glb", (gltf) => {
 	continueText = model.children.find((child) => child.name === "continue");
 	continueText.material = framesandtextMaterial;
 
-	batmanHat = model.children[0].children[0].children[0];
-	batmanHat.material = HatMaterial;
-	batmanHat.visible = false;
+	// batmanHat = model.children.find((child) => child.name === "batmanHat");
+	// batmanHat.material = HatMaterial;
+	// batmanHat.visible = false;
+	// batmanHat.position.x = 4;
 
 	cowboyHat = model.children.find((child) => child.name === "hat01");
 	cowboyHat.material = HatMaterial;
@@ -487,7 +488,7 @@ function checkIntersection() {
 	// calculate objects intersecting the picking ray
 	intersects = raycaster.intersectObjects(scene.children, true);
 
-	if (intersects.find((intersect) => intersect.object.name === "continue")) {
+	if (intersects[0].object.name === "continue") {
 		continueText.material = new THREE.MeshBasicMaterial({
 			transparent: true,
 			opacity: 0.5,

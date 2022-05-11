@@ -119,6 +119,10 @@ const poster4Texture = new THREE.TextureLoader().load(
 poster4Texture.flipY = false;
 poster4Texture.encoding = THREE.sRGBEncoding;
 
+const hoverboardTexture = new THREE.TextureLoader().load(
+	"./static/hoverboard.png"
+);
+
 // MATERIALS
 
 //  baked material
@@ -176,6 +180,13 @@ const poster4Material = new THREE.MeshBasicMaterial({
 	map: poster4Texture,
 });
 
+const HatMaterial = new THREE.MeshBasicMaterial({
+	color: 0x0,
+});
+
+const hoverboardMaterial = new THREE.MeshBasicMaterial({
+	map: hoverboardTexture,
+});
 // MODELS
 
 let model;
@@ -184,6 +195,9 @@ let continueTextSize;
 let name;
 let nameTitle;
 let screen;
+let batmanHat;
+let cowboyHat;
+let hoverboard;
 loader.load("./static/test.glb", (gltf) => {
 	model = gltf.scene;
 	console.log(model);
@@ -202,6 +216,18 @@ loader.load("./static/test.glb", (gltf) => {
 
 	continueText = model.children.find((child) => child.name === "continue");
 	continueText.material = framesandtextMaterial;
+
+	batmanHat = model.children[0].children[0].children[0];
+	batmanHat.material = HatMaterial;
+	batmanHat.visible = false;
+
+	cowboyHat = model.children.find((child) => child.name === "hat01");
+	cowboyHat.material = HatMaterial;
+	cowboyHat.visible = false;
+
+	hoverboard = model.children.find((child) => child.name === "Hoverboard");
+	hoverboard.material = hoverboardMaterial;
+	hoverboard.visible = false;
 
 	const frame1 = model.children.find((child) => child.name === "frame1");
 	frame1.material = framesandtextMaterial;
@@ -266,7 +292,7 @@ const defaultContactMaterial = new CANNON.ContactMaterial(
 	defaultMaterial,
 	{
 		friction: 0.1,
-		restitution: 0.2,
+		restitution: 0.6,
 	}
 );
 
@@ -274,28 +300,40 @@ world.addContactMaterial(defaultContactMaterial);
 world.defaultContactMaterial = defaultContactMaterial;
 
 // continue text
-const continueTextShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.1, 0.1));
+const continueTextShape = new CANNON.Box(new CANNON.Vec3(0.6, 0.03, 0.1));
 const continueTextBody = new CANNON.Body({
 	mass: 1,
-
-	position: new CANNON.Vec3(0.4, 0.57, 2.9),
+	position: new CANNON.Vec3(0.4, 0.5, 2.9),
 	shape: continueTextShape,
 });
 continueTextBody.mass = 0;
+continueTextBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), 1);
 
 world.addBody(continueTextBody);
 
 // name text
-const nameTextShape = new CANNON.Box(new CANNON.Vec3(1, 0.2, 0.1));
+const nameTextShape = new CANNON.Box(new CANNON.Vec3(0.7, 0.03, 0.1));
 const nameTextBody = new CANNON.Body({
 	mass: 1,
-	position: new CANNON.Vec3(-0.09, 1.3, 2.9),
+	position: new CANNON.Vec3(0.52, 1.1, 2.7),
 	shape: nameTextShape,
 });
 nameTextBody.mass = 0;
 nameTextBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), 1);
 
 world.addBody(nameTextBody);
+
+// name title text
+const nameTitleShape = new CANNON.Box(new CANNON.Vec3(0.9, 0.03, 0.1));
+const nameTitleBody = new CANNON.Body({
+	mass: 1,
+	position: new CANNON.Vec3(0.73, 0.9, 2.8),
+	shape: nameTitleShape,
+});
+nameTitleBody.mass = 0;
+nameTitleBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), 1);
+
+world.addBody(nameTitleBody);
 
 // floor
 const floorShape = new CANNON.Plane();
@@ -452,14 +490,35 @@ document.addEventListener("keydown", (event) => {
 
 // turn on mass for text physics on first scene
 
-// document.addEventListener("mousedown", (event) => {
-// 	if (intersects.find((intersect) => intersect.object.name === "continue"))
-// 		continueTextBody.mass = 1;
-// 	continueTextBody.updateMassProperties();
-// 	nameTextBody.mass = 1;
-// 	nameTextBody.updateMassProperties();
-// 	toSecondScene();
-// });
+document.addEventListener("mousedown", (event) => {
+	// title text physics
+	if (intersects.find((intersect) => intersect.object.name === "continue")) {
+		continueTextBody.mass = 1;
+		continueTextBody.updateMassProperties();
+		nameTextBody.mass = 1;
+		nameTextBody.updateMassProperties();
+		nameTitleBody.mass = 1;
+		nameTitleBody.updateMassProperties();
+		toSecondScene();
+	}
+	console.log(intersects);
+	// change hat
+	if (intersects.find((intersect) => intersect.object.name === "poster2")) {
+		batmanHat.visible = true;
+		cowboyHat.visible = false;
+		hoverboard.visible = false;
+	}
+	if (intersects.find((intersect) => intersect.object.name === "poster3")) {
+		cowboyHat.visible = true;
+		batmanHat.visible = false;
+		hoverboard.visible = false;
+	}
+	if (intersects.find((intersect) => intersect.object.name === "poster4")) {
+		hoverboard.visible = true;
+		cowboyHat.visible = false;
+		batmanHat.visible = false;
+	}
+});
 
 // track mouse x y
 document.addEventListener("mousemove", (event) => {
@@ -497,13 +556,16 @@ const tick = () => {
 
 	// UPDATE PHYSICS
 	world.step(1 / 60, deltaTime, 3);
-	cannonDebugger.update();
+	// cannonDebugger.update();
 	if (model) {
 		continueText.position.copy(continueTextBody.position);
 		continueText.quaternion.copy(continueTextBody.quaternion);
 
 		name.position.copy(nameTextBody.position);
 		name.quaternion.copy(nameTextBody.quaternion);
+
+		nameTitle.position.copy(nameTitleBody.position);
+		nameTitle.quaternion.copy(nameTitleBody.quaternion);
 	}
 
 	// UPDATE CONTROLS

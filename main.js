@@ -4,6 +4,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as CANNON from "cannon-es";
 import CannonDebugger from "cannon-es-debugger";
+import Stats from "stats.js";
 
 import gsap from "gsap";
 import * as dat from "dat.gui";
@@ -11,6 +12,12 @@ import * as dat from "dat.gui";
 // DEBUG
 const gui = new dat.GUI();
 gui.close();
+
+// STATS
+
+const stats = new Stats();
+stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild(stats.dom);
 
 // CANVAS
 const canvas = document.querySelector(".webgl");
@@ -198,12 +205,15 @@ let screen;
 let batmanHat;
 let cowboyHat;
 let hoverboard;
+let floor;
 loader.load("./static/test.glb", (gltf) => {
 	model = gltf.scene;
 	console.log(model);
 	model.traverse((child) => {
 		child.material = bakedMaterial;
 	});
+
+	floor = model.children.find((child) => child.name === "floor");
 
 	screen = model.children.find((child) => child.name === "screen");
 	screen.material = screenOneMaterial;
@@ -277,10 +287,10 @@ loader.load("./static/comp.glb", (gltf) => {
 
 // AXES HELPER
 
-// OBJECTS
-
 // PHYSICS
 const world = new CANNON.World();
+world.broadphase = new CANNON.SAPBroadphase(world);
+world.allowSleep = true;
 world.gravity.set(0, -9.8, 0);
 const cannonDebugger = new CannonDebugger(scene, world);
 
@@ -291,7 +301,7 @@ const defaultContactMaterial = new CANNON.ContactMaterial(
 	defaultMaterial,
 	defaultMaterial,
 	{
-		friction: 0.1,
+		friction: 0.5,
 		restitution: 0.6,
 	}
 );
@@ -308,6 +318,7 @@ const continueTextBody = new CANNON.Body({
 });
 continueTextBody.mass = 0;
 continueTextBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), 1);
+continueTextBody.allowSleep = false;
 
 world.addBody(continueTextBody);
 
@@ -320,6 +331,7 @@ const nameTextBody = new CANNON.Body({
 });
 nameTextBody.mass = 0;
 nameTextBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), 1);
+nameTextBody.allowSleep = false;
 
 world.addBody(nameTextBody);
 
@@ -332,6 +344,7 @@ const nameTitleBody = new CANNON.Body({
 });
 nameTitleBody.mass = 0;
 nameTitleBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), 1);
+// nameTitleBody.allowSleep = false;
 
 world.addBody(nameTitleBody);
 
@@ -344,6 +357,72 @@ const floorBody = new CANNON.Body({
 floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI / 2);
 world.addBody(floorBody);
 
+// desk
+const deskShape = new CANNON.Box(new CANNON.Vec3(1, 0.1, 0.52));
+
+const deskBody = new CANNON.Body({
+	position: new CANNON.Vec3(4, 0.9, 2.66),
+	mass: 0,
+	shape: deskShape,
+});
+// deskBody.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI / 2);
+world.addBody(deskBody);
+
+// OBJECTS
+
+const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
+	const shape = new CANNON.Box(
+		new CANNON.Vec3(width / 2, height / 2, depth / 2)
+	);
+	const physicsCubebody = new CANNON.Body({
+		mass: mass,
+		shape: shape,
+		position: new CANNON.Vec3(x, y, z),
+	});
+
+	physicsCubebody.allowSleep = true;
+	physicsCubebody.sleepSpeedLimit = 1.0;
+	physicsCubebody.sleepTimeLimit = 0.1;
+
+	physicsCubebody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -2);
+	world.addBody(physicsCubebody);
+	// create three js cube
+	const cube = new THREE.Mesh(
+		new THREE.BoxBufferGeometry(width, height, depth),
+		new THREE.MeshNormalMaterial({})
+	);
+	cube.name = name;
+	cube.position.set(x, y, z);
+	scene.add(cube);
+	return { physicsCubebody, cube };
+};
+
+const cubeData = [];
+
+const physicsCube1 = createPhysicsCube(4.05, 1, 3, 0.1, 0.1, 0.1, 1, "cube1");
+const physicsCube2 = createPhysicsCube(4.1, 1, 3, 0.1, 0.1, 0.1, 1, "cube2");
+const physicsCube3 = createPhysicsCube(4.15, 1, 3, 0.1, 0.1, 0.1, 1, "cube3");
+const physicsCube4 = createPhysicsCube(
+	4.075,
+	1.1,
+	3,
+	0.1,
+	0.1,
+	0.1,
+	1,
+	"cube4"
+);
+const physicsCube5 = createPhysicsCube(
+	4.125,
+	1.1,
+	3,
+	0.1,
+	0.1,
+	0.1,
+	1,
+	"cube5"
+);
+const physicsCube6 = createPhysicsCube(4.1, 1.2, 3, 0.1, 0.1, 0.1, 1, "cube6");
 // LIGHT
 
 // SIZES
@@ -386,6 +465,7 @@ scene.add(camera);
 const controls = new OrbitControls(camera, canvas);
 
 controls.enableDamping = true;
+controls.target.set(0, 0, 0);
 
 // RENDERER
 const renderer = new THREE.WebGLRenderer({
@@ -518,6 +598,42 @@ document.addEventListener("mousedown", (event) => {
 		cowboyHat.visible = false;
 		batmanHat.visible = false;
 	}
+	if (intersects.find((intersect) => intersect.object.name === "cube1")) {
+		physicsCube1.physicsCubebody.applyForce(
+			new THREE.Vector3(0, 1.5, 0),
+			physicsCube1.physicsCubebody.position
+		);
+	}
+	if (intersects.find((intersect) => intersect.object.name === "cube2")) {
+		physicsCube2.physicsCubebody.applyForce(
+			new THREE.Vector3(0, 1.5, 0),
+			physicsCube2.physicsCubebody.position
+		);
+	}
+	if (intersects.find((intersect) => intersect.object.name === "cube3")) {
+		physicsCube3.physicsCubebody.applyForce(
+			new THREE.Vector3(0, 1.5, 0),
+			physicsCube3.physicsCubebody.position
+		);
+	}
+	if (intersects.find((intersect) => intersect.object.name === "cube4")) {
+		physicsCube4.physicsCubebody.applyForce(
+			new THREE.Vector3(0, 1.5, 0),
+			physicsCube4.physicsCubebody.position
+		);
+	}
+	if (intersects.find((intersect) => intersect.object.name === "cube5")) {
+		physicsCube5.physicsCubebody.applyForce(
+			new THREE.Vector3(0, 1.5, 0),
+			physicsCube5.physicsCubebody.position
+		);
+	}
+	if (intersects.find((intersect) => intersect.object.name === "cube6")) {
+		physicsCube6.physicsCubebody.applyForce(
+			new THREE.Vector3(0, 2, 0),
+			physicsCube6.physicsCubebody.position
+		);
+	}
 });
 
 // track mouse x y
@@ -535,28 +651,30 @@ const clock = new THREE.Clock();
 let oldElapsed = 0;
 // TICK
 const tick = () => {
+	stats.begin();
 	// TIME
 	const elapsedTime = clock.getElapsedTime();
 	const deltaTime = elapsedTime - oldElapsed;
 	oldElapsed = elapsedTime;
 	// ROTATE SCENE
-	targetX = mouseX * 0.00003;
-	targetY = mouseY * 0.00003;
+	// targetX = mouseX * 0.00003;
+	// targetY = mouseY * 0.00003;
 
-	if (model) {
-		model.rotation.y += 0.05 * (targetX - model.rotation.y);
-		model.rotation.x += 0.05 * (targetY - model.rotation.x);
-	}
-	if (comp) {
-		comp.rotation.y += 0.05 * (targetX - comp.rotation.y);
-		comp.rotation.x += 0.05 * (targetY - comp.rotation.x);
-	}
+	// if (model) {
+	// 	model.rotation.y += 0.05 * (targetX - model.rotation.y);
+	// 	model.rotation.x += 0.05 * (targetY - model.rotation.x);
+	// }
+	// if (comp) {
+	// 	comp.rotation.y += 0.05 * (targetX - comp.rotation.y);
+	// 	comp.rotation.x += 0.05 * (targetY - comp.rotation.x);
+	// }
 
 	// UPDATE OBJECTS
 
 	// UPDATE PHYSICS
 	world.step(1 / 60, deltaTime, 3);
-	// cannonDebugger.update();
+	cannonDebugger.update();
+	// update model physics
 	if (model) {
 		continueText.position.copy(continueTextBody.position);
 		continueText.quaternion.copy(continueTextBody.quaternion);
@@ -568,12 +686,28 @@ const tick = () => {
 		nameTitle.quaternion.copy(nameTitleBody.quaternion);
 	}
 
+	// update objects not loaded from a GLTF model
+	physicsCube1.cube.position.copy(physicsCube1.physicsCubebody.position);
+	physicsCube2.cube.position.copy(physicsCube2.physicsCubebody.position);
+	physicsCube3.cube.position.copy(physicsCube3.physicsCubebody.position);
+	physicsCube4.cube.position.copy(physicsCube4.physicsCubebody.position);
+	physicsCube5.cube.position.copy(physicsCube5.physicsCubebody.position);
+	physicsCube6.cube.position.copy(physicsCube6.physicsCubebody.position);
+
+	physicsCube1.cube.quaternion.copy(physicsCube1.physicsCubebody.quaternion);
+	physicsCube2.cube.quaternion.copy(physicsCube2.physicsCubebody.quaternion);
+	physicsCube3.cube.quaternion.copy(physicsCube3.physicsCubebody.quaternion);
+	physicsCube4.cube.quaternion.copy(physicsCube4.physicsCubebody.quaternion);
+	physicsCube5.cube.quaternion.copy(physicsCube5.physicsCubebody.quaternion);
+	physicsCube6.cube.quaternion.copy(physicsCube6.physicsCubebody.quaternion);
+
 	// UPDATE CONTROLS
 	const delta = clock.getDelta();
 	controls.update();
 
 	// RENDER
 	renderer.render(scene, camera);
+	stats.end();
 	window.requestAnimationFrame(tick);
 };
 

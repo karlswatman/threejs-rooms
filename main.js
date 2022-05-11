@@ -40,6 +40,7 @@ const windowHalfY = window.innerHeight / 2;
 // RAYCASTER
 
 let intersects;
+let macIntersects;
 const raycaster = new THREE.Raycaster();
 // raycaster for mouse
 const pointer = new THREE.Vector2();
@@ -478,9 +479,9 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 
 // POST PROCESSING
 // RAYCASTER
+// update the picking ray with the camera and pointer position
 
 function checkIntersection() {
-	// update the picking ray with the camera and pointer position
 	raycaster.setFromCamera(pointer, camera);
 
 	// calculate objects intersecting the picking ray
@@ -497,8 +498,7 @@ function checkIntersection() {
 	}
 
 	if (mac) {
-		const macIntersects = raycaster.intersectObjects(mac.children);
-
+		macIntersects = raycaster.intersectObjects(mac.children);
 		if (macIntersects.length > 0) {
 			macMaterial.transparent = true;
 			macMaterial.opacity = 0.8;

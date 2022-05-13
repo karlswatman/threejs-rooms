@@ -8,6 +8,7 @@ import Stats from "stats.js";
 
 import gsap from "gsap";
 import * as dat from "dat.gui";
+import { MeshBasicMaterial } from "three";
 
 // DEBUG
 const gui = new dat.GUI();
@@ -158,14 +159,18 @@ const nameTextColour = {
 const compMaterial = new THREE.MeshBasicMaterial({
 	map: compTexture,
 	color: 0xffffff,
+	side: THREE.DoubleSide,
 });
 
 const macMaterial = new THREE.MeshBasicMaterial({
 	map: macTexture,
 });
 
-const macScreenMaterial = new THREE.MeshBasicMaterial({
+const macScreenMaterial = new THREE.MeshStandardMaterial({
 	map: macScreenTexture,
+	emissive: 0xffffff,
+	emissiveIntensity: 2,
+	emissiveMap: macScreenTexture,
 });
 
 const framesandtextMaterial = new THREE.MeshBasicMaterial({
@@ -237,9 +242,10 @@ loader.load("./static/test.glb", (gltf) => {
 	cowboyHat.material = HatMaterial;
 	cowboyHat.visible = false;
 
-	hoverboard = model.children.find((child) => child.name === "Hoverboard");
-	hoverboard.material = hoverboardMaterial;
-	hoverboard.visible = false;
+	// hoverboard = model.children.find((child) => child.name === "Hoverboard");
+	// hoverboard.material = hoverboardMaterial;
+	// hoverboard.visible = false;
+	// hoverboard.position.x = 10;
 
 	const frame1 = model.children.find((child) => child.name === "frame1");
 	frame1.material = framesandtextMaterial;
@@ -270,15 +276,44 @@ loader.load("./static/test.glb", (gltf) => {
 
 let comp;
 let mac;
+let lamp;
+let light;
+let backButton;
+let secondContinue;
 loader.load("./static/comp.glb", (gltf) => {
 	comp = gltf.scene;
+	console.log(comp);
 	comp.traverse((child) => {
 		child.material = compMaterial;
+		child.castShadow = true;
+		child.receiveShadow = true;
 	});
 	mac = comp.children.find((child) => child.name === "macBook_BottomPart");
-	mac.traverse((child) => {
-		child.material = macMaterial;
+	mac.material = macMaterial;
+	const backWall = comp.children.find((child) => child.name === "backWall");
+	backWall.material = macScreenMaterial;
+	lamp = comp.children.find((child) => child.name === "lamp");
+	light = comp.children.find((child) => child.name === "Light");
+	console.log(light);
+	light.children[0].shadow.camera.near = 0.2;
+	light.children[0].shadow.camera.far = 1;
+	light.children[0].shadow.bias = 0.0001;
+	light.children[0].castShadow = true;
+	light.children[0].angle = 0.93;
+	light.children[0].distance = 10;
+	light.children[0].intensity = 1;
+	light.children[0].penumbra = 0.07;
+	const spotLightFolder = gui.addFolder("Spot Light");
+	const desk = comp.children.find((child) => child.name === "desk");
+	desk.material = new THREE.MeshStandardMaterial({
+		map: compTexture,
 	});
+	desk.receiveShadow = true;
+	desk.castShadow = true;
+	secondContinue = comp.children.find(
+		(child) => child.name === "secondContinue"
+	);
+	backButton = comp.children.find((child) => child.name === "backButton");
 	const macScreen = comp.children.find((child) => child.name === "macScreen");
 	macScreen.material = macScreenMaterial;
 	comp.position.set(4, 0, 0);
@@ -297,7 +332,7 @@ world.gravity.set(0, -9.8, 0);
 const cannonDebugger = new CannonDebugger(scene, world);
 
 // materials
-const defaultMaterial = new CANNON.Material("default");
+const defaultMaterial = new CANNON.Material("plastic");
 
 const defaultContactMaterial = new CANNON.ContactMaterial(
 	defaultMaterial,
@@ -363,7 +398,7 @@ world.addBody(floorBody);
 const deskShape = new CANNON.Box(new CANNON.Vec3(1, 0.1, 0.52));
 
 const deskBody = new CANNON.Body({
-	position: new CANNON.Vec3(4, 0.9, 2.66),
+	position: new CANNON.Vec3(4, 0.88, 2.66),
 	mass: 0,
 	shape: deskShape,
 });
@@ -386,28 +421,38 @@ const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
 	physicsCubebody.sleepSpeedLimit = 1.0;
 	physicsCubebody.sleepTimeLimit = 0.1;
 
-	physicsCubebody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -2);
+	physicsCubebody.quaternion.setFromAxisAngle(
+		new CANNON.Vec3(0, 1, 0),
+		Math.PI / 4
+	);
 	world.addBody(physicsCubebody);
 	// create three js cube
 	const cube = new THREE.Mesh(
 		new THREE.BoxBufferGeometry(width, height, depth),
-		new THREE.MeshNormalMaterial({})
+		new THREE.MeshStandardMaterial({ color: 0xffffff })
 	);
+	cube.castShadow = true;
+	cube.receiveShadow = false;
 	cube.name = name;
 	cube.position.set(x, y, z);
 	scene.add(cube);
 	return { physicsCubebody, cube };
 };
 
-const cubeData = [];
+const cubeData = [
+	[4.05, 1, 3],
+	[4.1, 1, 3],
+	[4.15, 1, 3],
+];
 
-const physicsCube1 = createPhysicsCube(4.05, 1, 3, 0.1, 0.1, 0.1, 1, "cube1");
-const physicsCube2 = createPhysicsCube(4.1, 1, 3, 0.1, 0.1, 0.1, 1, "cube2");
-const physicsCube3 = createPhysicsCube(4.15, 1, 3, 0.1, 0.1, 0.1, 1, "cube3");
+const physicsCube1 = createPhysicsCube(4.5, 1, 2.8, 0.1, 0.1, 0.1, 1, "cube1");
+console.log(physicsCube1);
+const physicsCube2 = createPhysicsCube(4.6, 1, 2.8, 0.1, 0.1, 0.1, 1, "cube2");
+const physicsCube3 = createPhysicsCube(4.7, 1, 2.8, 0.1, 0.1, 0.1, 1, "cube3");
 const physicsCube4 = createPhysicsCube(
-	4.075,
+	4.55,
 	1.1,
-	3,
+	2.8,
 	0.1,
 	0.1,
 	0.1,
@@ -415,17 +460,60 @@ const physicsCube4 = createPhysicsCube(
 	"cube4"
 );
 const physicsCube5 = createPhysicsCube(
-	4.125,
+	4.65,
 	1.1,
-	3,
+	2.8,
 	0.1,
 	0.1,
 	0.1,
 	1,
 	"cube5"
 );
-const physicsCube6 = createPhysicsCube(4.1, 1.2, 3, 0.1, 0.1, 0.1, 1, "cube6");
+const physicsCube6 = createPhysicsCube(
+	4.6,
+	1.2,
+	2.8,
+	0.1,
+	0.1,
+	0.1,
+	1,
+	"cube6"
+);
 // LIGHT
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+scene.add(ambientLight);
+// const light = new THREE.SpotLight(0xffffff, 0.5, 10);
+
+// light.position.set(4.6, 1.5, 2.6);
+// const spotLightFolder = gui.addFolder("Spot Light");
+// spotLightFolder.add(light.position, "x", 0, 10).name("pos X");
+// spotLightFolder.add(light.position, "y", 0, 10).name("pos Y");
+// spotLightFolder.add(light.position, "z", 0, 10).name("pos Z");
+// // spotLightFolder.add(light, "angle", 0, Math.PI / 2).name("angle");
+// spotLightFolder.add(light, "intensity", 0, 1).name("intensity");
+// spotLightFolder.add(light, "distance", 0, 10).name("distance");
+// // spotLightFolder.add(light, "penumbra", 0, 1).name("penumbra");
+// light.castShadow = true;
+// // light.angle = 1.2;
+// light.intensity = 0.5;
+// // light.penumbra = 0.5;
+
+// console.log(light);
+// scene.add(light);
+// // scene.add(light.target);
+
+// //Set up shadow properties for the light
+// light.shadow.mapSize.width = 2048; // default
+// // light.shadow.blurSamples = 4; // default
+// light.shadow.mapSize.height = 2048; // default
+// light.shadow.camera.near = 0.5; // default
+// light.shadow.camera.far = 500; // default
+
+// // light hellper
+// const lightHelper = new THREE.PointLightHelper(light, 5);
+// // lightHelper.cone.material.color.set(0xffffff);
+// scene.add(lightHelper);
 
 // SIZES
 const sizes = {
@@ -450,8 +538,8 @@ const camera = new THREE.PerspectiveCamera(
 	75,
 	window.innerWidth / window.innerHeight
 );
-
-camera.position.set(0, 1.6, 4);
+camera.focus = 0.2;
+camera.position.set(4, 1.6, 4);
 camera.rotation.x = -0.4;
 
 const cameraFolder = gui.addFolder("Camera");
@@ -467,7 +555,7 @@ scene.add(camera);
 const controls = new OrbitControls(camera, canvas);
 
 controls.enableDamping = true;
-controls.target.set(0, 0, 0);
+controls.target.set(4, 0, 0);
 
 // RENDERER
 const renderer = new THREE.WebGLRenderer({
@@ -477,6 +565,8 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 // POST PROCESSING
 // RAYCASTER
@@ -488,26 +578,22 @@ function checkIntersection() {
 	// calculate objects intersecting the picking ray
 	intersects = raycaster.intersectObjects(scene.children, true);
 
-	if (intersects[0].object.name === "continue") {
-		continueText.material = new THREE.MeshBasicMaterial({
+	if (intersects.length > 0) {
+		const name = intersects[0].object.name;
+		const selectedMaterial = new THREE.MeshBasicMaterial({
 			transparent: true,
 			opacity: 0.5,
 			color: 0xffffff,
+			side: THREE.DoubleSide,
 		});
-	} else {
-		if (continueText) continueText.material = framesandtextMaterial;
-	}
 
-	if (mac) {
-		macIntersects = raycaster.intersectObjects(mac.children);
-		if (macIntersects.length > 0) {
-			macMaterial.transparent = true;
-			macMaterial.opacity = 0.8;
-			macMaterial.needsUpdate = true;
-		} else {
-			macMaterial.transparent = false;
-			macMaterial.needsUpdate = true;
-		}
+		continueText.material =
+			name === "continue" ? selectedMaterial : framesandtextMaterial;
+		mac.material = name === "macBook_BottomPart" ? selectedMaterial : macMaterial;
+		lamp.material = name === "lamp" ? selectedMaterial : compMaterial;
+		backButton.material = name === "backButton" ? selectedMaterial : compMaterial;
+		secondContinue.material =
+			name === "secondContinue" ? selectedMaterial : compMaterial;
 	}
 }
 
@@ -515,37 +601,45 @@ function checkIntersection() {
 
 const toSecondScene = () => {
 	gsap
-		.to(camera.position, {
-			delay: 3,
+		.to(controls.target, {
 			duration: 1,
 			x: 4,
-			y: 1.34,
-			ease: "power3.inOut",
+			y: 0,
+			z: 0,
 		})
 		.then(() => {
-			gsap.to(camera.position, {
-				duration: 1,
-				z: 3.5,
-				ease: "power3.inOut",
-			});
+			gsap
+				.to(camera.position, {
+					delay: 3,
+					duration: 1,
+					x: 4,
+					y: 2,
+					ease: "power3.inOut",
+				})
+				.then(() => {
+					gsap.to(camera.position, {
+						duration: 1,
+						z: 4,
+						ease: "power3.inOut",
+					});
+				});
 		});
 };
 
 const backToFirstScene = () => {
-	gsap
-		.to(camera.position, {
-			duration: 1,
-			z: 4,
-			ease: "power3.inOut",
-		})
-		.then(() => {
-			gsap.to(camera.position, {
-				duration: 1,
-				x: 0,
-				y: 1.6,
-				ease: "power3.inOut",
-			});
-		});
+	gsap.to(controls.target, {
+		duration: 1,
+		x: 0,
+		y: 0,
+		z: 0,
+	});
+
+	gsap.to(camera.position, {
+		duration: 1,
+		x: 0,
+		y: 2,
+		ease: "power3.inOut",
+	});
 };
 
 // EVENTS
@@ -572,68 +666,88 @@ document.addEventListener("keydown", (event) => {
 // turn on mass for text physics on first scene
 
 document.addEventListener("mousedown", (event) => {
-	// title text physics
-	if (intersects.find((intersect) => intersect.object.name === "continue")) {
-		continueTextBody.mass = 1;
-		continueTextBody.updateMassProperties();
-		nameTextBody.mass = 1;
-		nameTextBody.updateMassProperties();
-		nameTitleBody.mass = 1;
-		nameTitleBody.updateMassProperties();
-		toSecondScene();
-	}
-	console.log(intersects);
-	// change hat
-	if (intersects.find((intersect) => intersect.object.name === "poster2")) {
-		batmanHat.visible = true;
-		cowboyHat.visible = false;
-		hoverboard.visible = false;
-	}
-	if (intersects.find((intersect) => intersect.object.name === "poster3")) {
-		cowboyHat.visible = true;
-		batmanHat.visible = false;
-		hoverboard.visible = false;
-	}
-	if (intersects.find((intersect) => intersect.object.name === "poster4")) {
-		hoverboard.visible = true;
-		cowboyHat.visible = false;
-		batmanHat.visible = false;
-	}
-	if (intersects.find((intersect) => intersect.object.name === "cube1")) {
-		physicsCube1.physicsCubebody.applyForce(
-			new THREE.Vector3(0, 1.5, 0),
-			physicsCube1.physicsCubebody.position
-		);
-	}
-	if (intersects.find((intersect) => intersect.object.name === "cube2")) {
-		physicsCube2.physicsCubebody.applyForce(
-			new THREE.Vector3(0, 1.5, 0),
-			physicsCube2.physicsCubebody.position
-		);
-	}
-	if (intersects.find((intersect) => intersect.object.name === "cube3")) {
-		physicsCube3.physicsCubebody.applyForce(
-			new THREE.Vector3(0, 1.5, 0),
-			physicsCube3.physicsCubebody.position
-		);
-	}
-	if (intersects.find((intersect) => intersect.object.name === "cube4")) {
-		physicsCube4.physicsCubebody.applyForce(
-			new THREE.Vector3(0, 1.5, 0),
-			physicsCube4.physicsCubebody.position
-		);
-	}
-	if (intersects.find((intersect) => intersect.object.name === "cube5")) {
-		physicsCube5.physicsCubebody.applyForce(
-			new THREE.Vector3(0, 1.5, 0),
-			physicsCube5.physicsCubebody.position
-		);
-	}
-	if (intersects.find((intersect) => intersect.object.name === "cube6")) {
-		physicsCube6.physicsCubebody.applyForce(
-			new THREE.Vector3(0, 2, 0),
-			physicsCube6.physicsCubebody.position
-		);
+	if (intersects.length > 0) {
+		// object clicked on
+		const name = intersects[0].object.name;
+		// title text physics
+		if (name === "continue") {
+			continueTextBody.mass = 1;
+			continueTextBody.updateMassProperties();
+			nameTextBody.mass = 1;
+			nameTextBody.updateMassProperties();
+			nameTitleBody.mass = 1;
+			nameTitleBody.updateMassProperties();
+			toSecondScene();
+		}
+		if (name === "backButton") {
+			backToFirstScene();
+		}
+		if (name === "lamp") {
+			light.children[0].visible = !light.children[0].visible;
+		}
+		console.log(intersects);
+		// change hat
+		if (intersects.find((intersect) => intersect.object.name === "poster2")) {
+			batmanHat.visible = true;
+			cowboyHat.visible = false;
+			hoverboard.visible = false;
+		}
+		if (intersects.find((intersect) => intersect.object.name === "poster3")) {
+			cowboyHat.visible = true;
+			batmanHat.visible = false;
+			hoverboard.visible = false;
+		}
+		if (intersects.find((intersect) => intersect.object.name === "poster4")) {
+			hoverboard.visible = true;
+			cowboyHat.visible = false;
+			batmanHat.visible = false;
+		}
+		// cube interactions
+		const force = new THREE.Vector3(0, 0.1, 0);
+		if (/[cube]/g.test(name)) {
+			switch (name) {
+				case "cube1":
+					physicsCube1.physicsCubebody.applyLocalForce(
+						force,
+						physicsCube1.physicsCubebody.position
+					);
+					physicsCube1.physicsCubebody.velocity.y = 2;
+					// physicsCube1.physicsCubebody.velocity.x = 1;
+					break;
+				case "cube2":
+					physicsCube2.physicsCubebody.applyLocalForce(
+						force,
+						physicsCube2.physicsCubebody.position
+					);
+					break;
+				case "cube3":
+					physicsCube3.physicsCubebody.applyLocalForce(
+						force,
+						physicsCube3.physicsCubebody.position
+					);
+					break;
+				case "cube4":
+					physicsCube4.physicsCubebody.applyLocalForce(
+						force,
+						physicsCube4.physicsCubebody.position
+					);
+					break;
+				case "cube5":
+					physicsCube5.physicsCubebody.applyLocalForce(
+						force,
+						physicsCube5.physicsCubebody.position
+					);
+					break;
+				case "cube6":
+					physicsCube6.physicsCubebody.applyLocalForce(
+						force,
+						physicsCube6.physicsCubebody.position
+					);
+					break;
+				default:
+					break;
+			}
+		}
 	}
 });
 
@@ -654,6 +768,9 @@ let oldElapsed = 0;
 const tick = () => {
 	stats.begin();
 	// TIME
+	// light.target.position.set(0, -20, 0);
+	// lightHelper.parent.updateMatrixWorld();
+	// lightHelper.update();
 	const elapsedTime = clock.getElapsedTime();
 	const deltaTime = elapsedTime - oldElapsed;
 	oldElapsed = elapsedTime;
@@ -674,7 +791,7 @@ const tick = () => {
 
 	// UPDATE PHYSICS
 	world.step(1 / 60, deltaTime, 3);
-	cannonDebugger.update();
+	// cannonDebugger.update();
 	// update model physics
 	if (model) {
 		continueText.position.copy(continueTextBody.position);

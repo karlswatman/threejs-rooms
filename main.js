@@ -95,7 +95,7 @@ macTexture.encoding = THREE.sRGBEncoding;
 const macScreenTexture = new THREE.VideoTexture(video);
 macScreenTexture.minFilter = THREE.LinearFilter;
 macScreenTexture.magFilter = THREE.LinearFilter;
-macScreenTexture.format = THREE.RGBAFormat;
+// macScreenTexture.format = THREE.RGBAFormat;
 macScreenTexture.flipY = false;
 
 const screenTwoTexture = new THREE.TextureLoader().load(
@@ -169,7 +169,6 @@ const macMaterial = new THREE.MeshBasicMaterial({
 const macScreenMaterial = new THREE.MeshStandardMaterial({
 	map: macScreenTexture,
 	emissive: 0xffffff,
-	emissiveIntensity: 2,
 	emissiveMap: macScreenTexture,
 });
 
@@ -299,9 +298,9 @@ loader.load("./static/comp.glb", (gltf) => {
 	light.children[0].shadow.camera.far = 1;
 	light.children[0].shadow.bias = 0.0001;
 	light.children[0].castShadow = true;
-	light.children[0].angle = 0.93;
+	light.children[0].angle = 0.76;
 	light.children[0].distance = 10;
-	light.children[0].intensity = 1;
+	light.children[0].intensity = 10;
 	light.children[0].penumbra = 0.07;
 	const spotLightFolder = gui.addFolder("Spot Light");
 	const desk = comp.children.find((child) => child.name === "desk");
@@ -641,6 +640,22 @@ const backToFirstScene = () => {
 		ease: "power3.inOut",
 	});
 };
+const zoomToMac = () => {
+	gsap.to(camera.position, {
+		duration: 3,
+		x: 3.7,
+		y: 1.3,
+		z: 2.9,
+		ease: "power3.inOut",
+	});
+	gsap.to(controls.target, {
+		duration: 3,
+		x: 3.54,
+		y: 1,
+		z: 2,
+		ease: "power3.inOut",
+	});
+};
 
 // EVENTS
 
@@ -678,12 +693,20 @@ document.addEventListener("mousedown", (event) => {
 			nameTitleBody.mass = 1;
 			nameTitleBody.updateMassProperties();
 			toSecondScene();
+			video.src = "./macScreen.mov";
+			video.play();
 		}
 		if (name === "backButton") {
 			backToFirstScene();
 		}
 		if (name === "lamp") {
 			light.children[0].visible = !light.children[0].visible;
+		}
+		if (name === "macBook_BottomPart") {
+			zoomToMac();
+		}
+		if (name === "macScreen") {
+			window.open("https://karl-swatman.netlify.app/", "_blank");
 		}
 		console.log(intersects);
 		// change hat

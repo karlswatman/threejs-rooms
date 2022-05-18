@@ -607,6 +607,7 @@ const toSecondScene = () => {
 			duration: 1,
 			x: 4,
 			y: 1.6,
+			z: 4,
 			ease: "power3.inOut",
 		})
 		.then(() => {
@@ -814,7 +815,6 @@ const clock = new THREE.Clock();
 let oldElapsed = 0;
 // TICK
 const tick = () => {
-	console.log(mouseMoving);
 	stats.begin();
 	// TIME
 	// light.target.position.set(0, -20, 0);

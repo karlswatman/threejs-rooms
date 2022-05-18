@@ -687,6 +687,7 @@ document.addEventListener("mousedown", () => {
 	mouseDown = true;
 });
 document.addEventListener("mouseup", (event) => {
+	mouseDown = false;
 	if (intersects.length > 0 && !mouseMoving) {
 		// object clicked on
 		const name = intersects[0].object.name;
@@ -798,7 +799,6 @@ document.addEventListener("mousemove", (event) => {
 		clearTimeout(mouseTimeout);
 		mouseTimeout = setTimeout(() => {
 			mouseMoving = false;
-			mouseDown = false;
 		}, 500);
 	}
 	mouseX = event.clientX - windowHalfX;

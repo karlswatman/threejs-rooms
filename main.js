@@ -800,7 +800,7 @@ document.addEventListener("mousemove", (event) => {
 		mouseTimeout = setTimeout(() => {
 			mouseMoving = false;
 			mouseDown = false;
-		}, 1000);
+		}, 500);
 	}
 	mouseX = event.clientX - windowHalfX;
 	mouseY = event.clientY - windowHalfY;

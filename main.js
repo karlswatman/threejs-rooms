@@ -79,6 +79,9 @@ video.muted = true;
 const instructionsTexture = textureLoader.load("./static/Drawing.jpeg");
 instructionsTexture.flipY = false;
 instructionsTexture.encoding = THREE.sRGBEncoding;
+const macInstructionsTexture = textureLoader.load("./static/macAccess.jpeg");
+macInstructionsTexture.flipY = false;
+macInstructionsTexture.encoding = THREE.sRGBEncoding;
 // baked texture for first scene
 const bakedTexture = new THREE.TextureLoader().load("./static/testbake.jpg");
 bakedTexture.flipY = false;
@@ -279,6 +282,7 @@ let lamp;
 let light;
 let backButton;
 let secondContinue;
+let macScreen;
 loader.load("./static/comp.glb", (gltf) => {
 	comp = gltf.scene;
 	console.log(comp);
@@ -290,7 +294,7 @@ loader.load("./static/comp.glb", (gltf) => {
 	mac = comp.children.find((child) => child.name === "macBook_BottomPart");
 	mac.material = macMaterial;
 	const backWall = comp.children.find((child) => child.name === "backWall");
-	backWall.material = macScreenMaterial;
+	backWall.material = screenTwoMaterial;
 	lamp = comp.children.find((child) => child.name === "lamp");
 	light = comp.children.find((child) => child.name === "Light");
 	console.log(light);
@@ -313,7 +317,7 @@ loader.load("./static/comp.glb", (gltf) => {
 		(child) => child.name === "secondContinue"
 	);
 	backButton = comp.children.find((child) => child.name === "backButton");
-	const macScreen = comp.children.find((child) => child.name === "macScreen");
+	macScreen = comp.children.find((child) => child.name === "macScreen");
 	macScreen.material = macScreenMaterial;
 	comp.position.set(4, 0, 0);
 	scene.add(comp);
@@ -480,7 +484,7 @@ const physicsCube6 = createPhysicsCube(
 );
 // LIGHT
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
 // const light = new THREE.SpotLight(0xffffff, 0.5, 10);
 
@@ -599,29 +603,29 @@ function checkIntersection() {
 // ANIMATIONS
 
 const toSecondScene = () => {
+	gsap.to(controls.target, {
+		duration: 1,
+		delay: 2,
+		x: 4,
+		y: 0,
+		z: 0,
+	});
 	gsap
-		.to(controls.target, {
+		.to(camera.position, {
+			delay: 2,
 			duration: 1,
 			x: 4,
-			y: 0,
-			z: 0,
+			y: 1.6,
+			ease: "power3.inOut",
 		})
 		.then(() => {
-			gsap
-				.to(camera.position, {
-					delay: 3,
-					duration: 1,
-					x: 4,
-					y: 2,
-					ease: "power3.inOut",
-				})
-				.then(() => {
-					gsap.to(camera.position, {
-						duration: 1,
-						z: 4,
-						ease: "power3.inOut",
-					});
-				});
+			gsap.to(camera.position, {
+				duration: 1,
+				z: 4,
+				ease: "power3.inOut",
+			});
+			video.src = "./macScreen.mov";
+			video.play();
 		});
 };
 
@@ -648,13 +652,19 @@ const zoomToMac = () => {
 		z: 2.9,
 		ease: "power3.inOut",
 	});
-	gsap.to(controls.target, {
-		duration: 3,
-		x: 3.54,
-		y: 1,
-		z: 2,
-		ease: "power3.inOut",
-	});
+	gsap
+		.to(controls.target, {
+			duration: 3,
+			x: 3.54,
+			y: 1,
+			z: 2,
+			ease: "power3.inOut",
+		})
+		.then(() => {
+			macScreen.material.map = macInstructionsTexture;
+			macScreen.material.emissiveMap = macInstructionsTexture;
+			macScreen.material.needsUpdate = true;
+		});
 };
 
 // EVENTS
@@ -680,7 +690,7 @@ document.addEventListener("keydown", (event) => {
 
 // turn on mass for text physics on first scene
 
-document.addEventListener("mousedown", (event) => {
+document.addEventListener("mouseup", (event) => {
 	if (intersects.length > 0) {
 		// object clicked on
 		const name = intersects[0].object.name;
@@ -693,8 +703,6 @@ document.addEventListener("mousedown", (event) => {
 			nameTitleBody.mass = 1;
 			nameTitleBody.updateMassProperties();
 			toSecondScene();
-			video.src = "./macScreen.mov";
-			video.play();
 		}
 		if (name === "backButton") {
 			backToFirstScene();

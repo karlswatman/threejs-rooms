@@ -661,6 +661,9 @@ const zoomToMac = () => {
 
 // change channel
 let tvOn = false;
+let mouseMoving = false;
+let mouseDown = false;
+let mouseTimeout;
 document.addEventListener("keydown", (event) => {
 	if (event.key === "ArrowLeft") {
 		backToFirstScene();
@@ -680,9 +683,11 @@ document.addEventListener("keydown", (event) => {
 });
 
 // turn on mass for text physics on first scene
-
+document.addEventListener("mousedown", () => {
+	mouseDown = true;
+});
 document.addEventListener("mouseup", (event) => {
-	if (intersects.length > 0) {
+	if (intersects.length > 0 && !mouseMoving) {
 		// object clicked on
 		const name = intersects[0].object.name;
 		// title text physics
@@ -787,6 +792,15 @@ document.addEventListener("mouseup", (event) => {
 
 // track mouse x y
 document.addEventListener("mousemove", (event) => {
+	if (mouseDown) {
+		mouseMoving = true;
+
+		clearTimeout(mouseTimeout);
+		mouseTimeout = setTimeout(() => {
+			mouseMoving = false;
+			mouseDown = false;
+		}, 1000);
+	}
 	mouseX = event.clientX - windowHalfX;
 	mouseY = event.clientY - windowHalfY;
 
@@ -800,6 +814,7 @@ const clock = new THREE.Clock();
 let oldElapsed = 0;
 // TICK
 const tick = () => {
+	console.log(mouseMoving);
 	stats.begin();
 	// TIME
 	// light.target.position.set(0, -20, 0);

@@ -535,6 +535,17 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.target.set(0, 0, 0);
 
+controls.minPolarAngle = Math.PI / 3;
+controls.maxPolarAngle = Math.PI / 2.3;
+
+controls.maxAzimuthAngle = Math.PI / 7.5;
+controls.minAzimuthAngle = -Math.PI / 7.5;
+
+controls.maxDistance = 4.3;
+controls.minDistance = 3.4;
+controls.zoomSpeed = 0.1;
+
+controls.rotateSpeed = 0.1;
 // RENDERER
 const renderer = new THREE.WebGLRenderer({
 	canvas,

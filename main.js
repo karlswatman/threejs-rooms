@@ -610,13 +610,9 @@ const toSecondScene = () => {
 			ease: "power3.inOut",
 		})
 		.then(() => {
-			gsap.to(camera.position, {
-				duration: 1,
-				z: 4,
-				ease: "power3.inOut",
-			});
 			video.src = "./macScreen.mov";
 			video.play();
+			controls.minDistance = 3.4;
 		});
 };
 
@@ -634,6 +630,7 @@ const backToFirstScene = () => {
 		duration: 1,
 		x: 0,
 		y: 1.6,
+		z: 4,
 		ease: "power3.inOut",
 	});
 };
@@ -711,6 +708,7 @@ document.addEventListener("mouseup", (event) => {
 			light.children[0].visible = !light.children[0].visible;
 		}
 		if (name === "macBook_BottomPart") {
+			controls.minDistance = 0;
 			zoomToMac();
 		}
 		if (name === "macScreen") {

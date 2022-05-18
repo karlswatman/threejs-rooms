@@ -595,16 +595,15 @@ function checkIntersection() {
 
 const toSecondScene = () => {
 	gsap.to(controls.target, {
-		duration: 1,
-		delay: 2,
+		duration: 2,
+
 		x: 4,
 		y: 0,
 		z: 0,
 	});
 	gsap
 		.to(camera.position, {
-			delay: 2,
-			duration: 1,
+			duration: 2,
 			x: 4,
 			y: 1.6,
 			z: 4,

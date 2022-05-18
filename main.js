@@ -101,10 +101,6 @@ macScreenTexture.magFilter = THREE.LinearFilter;
 // macScreenTexture.format = THREE.RGBAFormat;
 macScreenTexture.flipY = false;
 
-const screenTwoTexture = new THREE.TextureLoader().load(
-	"./static/scrumBoard.png"
-);
-
 const framesAndTextTexture = new THREE.TextureLoader().load(
 	"./static/framesandtext.jpg"
 );
@@ -149,7 +145,13 @@ const screenOneMaterial = new THREE.MeshBasicMaterial({
 });
 
 const screenTwoMaterial = new THREE.MeshBasicMaterial({
-	map: screenTwoTexture,
+	color: 0x08beff,
+});
+const screenTwoColor = {
+	color: 0xffffff,
+};
+gui.addColor(screenTwoColor, "color").onChange((color) => {
+	screenTwoMaterial.color = new THREE.Color(color);
 });
 
 const nameTextMaterial = new THREE.MeshBasicMaterial({
@@ -283,6 +285,7 @@ let light;
 let backButton;
 let secondContinue;
 let macScreen;
+let leaveButton;
 loader.load("./static/comp.glb", (gltf) => {
 	comp = gltf.scene;
 	console.log(comp);
@@ -291,11 +294,14 @@ loader.load("./static/comp.glb", (gltf) => {
 		child.castShadow = true;
 		child.receiveShadow = true;
 	});
+	leaveButton = comp.children.find((child) => child.name === "leaveButton");
+	leaveButton.material = screenTwoMaterial;
 	mac = comp.children.find((child) => child.name === "macBook_BottomPart");
 	mac.material = macMaterial;
 	const backWall = comp.children.find((child) => child.name === "backWall");
 	backWall.material = screenTwoMaterial;
 	lamp = comp.children.find((child) => child.name === "lamp");
+
 	light = comp.children.find((child) => child.name === "Light");
 	console.log(light);
 	light.children[0].shadow.camera.near = 0.2;
@@ -432,7 +438,7 @@ const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
 	// create three js cube
 	const cube = new THREE.Mesh(
 		new THREE.BoxBufferGeometry(width, height, depth),
-		new THREE.MeshStandardMaterial({ color: 0xffffff })
+		new THREE.MeshStandardMaterial({ color: 0x08beff })
 	);
 	cube.castShadow = true;
 	cube.receiveShadow = false;
@@ -484,39 +490,8 @@ const physicsCube6 = createPhysicsCube(
 );
 // LIGHT
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
 scene.add(ambientLight);
-// const light = new THREE.SpotLight(0xffffff, 0.5, 10);
-
-// light.position.set(4.6, 1.5, 2.6);
-// const spotLightFolder = gui.addFolder("Spot Light");
-// spotLightFolder.add(light.position, "x", 0, 10).name("pos X");
-// spotLightFolder.add(light.position, "y", 0, 10).name("pos Y");
-// spotLightFolder.add(light.position, "z", 0, 10).name("pos Z");
-// // spotLightFolder.add(light, "angle", 0, Math.PI / 2).name("angle");
-// spotLightFolder.add(light, "intensity", 0, 1).name("intensity");
-// spotLightFolder.add(light, "distance", 0, 10).name("distance");
-// // spotLightFolder.add(light, "penumbra", 0, 1).name("penumbra");
-// light.castShadow = true;
-// // light.angle = 1.2;
-// light.intensity = 0.5;
-// // light.penumbra = 0.5;
-
-// console.log(light);
-// scene.add(light);
-// // scene.add(light.target);
-
-// //Set up shadow properties for the light
-// light.shadow.mapSize.width = 2048; // default
-// // light.shadow.blurSamples = 4; // default
-// light.shadow.mapSize.height = 2048; // default
-// light.shadow.camera.near = 0.5; // default
-// light.shadow.camera.far = 500; // default
-
-// // light hellper
-// const lightHelper = new THREE.PointLightHelper(light, 5);
-// // lightHelper.cone.material.color.set(0xffffff);
-// scene.add(lightHelper);
 
 // SIZES
 const sizes = {
@@ -542,7 +517,7 @@ const camera = new THREE.PerspectiveCamera(
 	window.innerWidth / window.innerHeight
 );
 camera.focus = 0.2;
-camera.position.set(4, 1.6, 4);
+camera.position.set(0, 1.6, 4);
 camera.rotation.x = -0.4;
 
 const cameraFolder = gui.addFolder("Camera");
@@ -558,7 +533,7 @@ scene.add(camera);
 const controls = new OrbitControls(camera, canvas);
 
 controls.enableDamping = true;
-controls.target.set(4, 0, 0);
+controls.target.set(0, 0, 0);
 
 // RENDERER
 const renderer = new THREE.WebGLRenderer({
@@ -590,10 +565,15 @@ function checkIntersection() {
 			side: THREE.DoubleSide,
 		});
 
+		const lampMaterial = new THREE.MeshStandardMaterial({
+			side: THREE.DoubleSide,
+			color: 0xffffff,
+		});
+
 		continueText.material =
 			name === "continue" ? selectedMaterial : framesandtextMaterial;
 		mac.material = name === "macBook_BottomPart" ? selectedMaterial : macMaterial;
-		lamp.material = name === "lamp" ? selectedMaterial : compMaterial;
+		lamp.material = name === "lamp" ? selectedMaterial : lampMaterial;
 		backButton.material = name === "backButton" ? selectedMaterial : compMaterial;
 		secondContinue.material =
 			name === "secondContinue" ? selectedMaterial : compMaterial;
@@ -630,6 +610,8 @@ const toSecondScene = () => {
 };
 
 const backToFirstScene = () => {
+	video.src = "./load.mp4";
+	video.play();
 	gsap.to(controls.target, {
 		duration: 1,
 		x: 0,
@@ -640,7 +622,7 @@ const backToFirstScene = () => {
 	gsap.to(camera.position, {
 		duration: 1,
 		x: 0,
-		y: 2,
+		y: 1.6,
 		ease: "power3.inOut",
 	});
 };
@@ -682,6 +664,7 @@ document.addEventListener("keydown", (event) => {
 			tvOn = false;
 		} else {
 			screen.material.map = videoTexture;
+			video.src = "./load.mp4";
 			video.play();
 			tvOn = true;
 		}
@@ -695,6 +678,12 @@ document.addEventListener("mouseup", (event) => {
 		// object clicked on
 		const name = intersects[0].object.name;
 		// title text physics
+		if (name === "leaveButton") {
+			toSecondScene();
+			macScreen.material.map = macScreenTexture;
+			macScreen.material.emissiveMap = macScreenTexture;
+			macScreen.material.needsUpdate = true;
+		}
 		if (name === "continue") {
 			continueTextBody.mass = 1;
 			continueTextBody.updateMassProperties();
@@ -750,30 +739,35 @@ document.addEventListener("mouseup", (event) => {
 						force,
 						physicsCube2.physicsCubebody.position
 					);
+					physicsCube2.physicsCubebody.velocity.y = 2;
 					break;
 				case "cube3":
 					physicsCube3.physicsCubebody.applyLocalForce(
 						force,
 						physicsCube3.physicsCubebody.position
 					);
+					physicsCube3.physicsCubebody.velocity.y = 2;
 					break;
 				case "cube4":
 					physicsCube4.physicsCubebody.applyLocalForce(
 						force,
 						physicsCube4.physicsCubebody.position
 					);
+					physicsCube4.physicsCubebody.velocity.y = 2;
 					break;
 				case "cube5":
 					physicsCube5.physicsCubebody.applyLocalForce(
 						force,
 						physicsCube5.physicsCubebody.position
 					);
+					physicsCube5.physicsCubebody.velocity.y = 2;
 					break;
 				case "cube6":
 					physicsCube6.physicsCubebody.applyLocalForce(
 						force,
 						physicsCube6.physicsCubebody.position
 					);
+					physicsCube6.physicsCubebody.velocity.y = 2;
 					break;
 				default:
 					break;

@@ -433,6 +433,30 @@ const deskBody = new CANNON.Body({
 // deskBody.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI / 2);
 world.addBody(deskBody);
 
+// third scene walls
+const wallShape = new CANNON.Box(new CANNON.Vec3(2, 0.1, 2));
+const wallBody = new CANNON.Body({
+	mass: 0,
+	position: new CANNON.Vec3(8, 0, -0.5),
+	shape: wallShape,
+});
+wallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2);
+world.addBody(wallBody);
+const wallBody2 = new CANNON.Body({
+	mass: 0,
+	position: new CANNON.Vec3(6, 0, 1.5),
+	shape: wallShape,
+});
+wallBody2.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
+world.addBody(wallBody2);
+const wallBody3 = new CANNON.Body({
+	mass: 0,
+	position: new CANNON.Vec3(10, 0, 1.5),
+	shape: wallShape,
+});
+wallBody3.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
+world.addBody(wallBody3);
+
 // OBJECTS
 
 const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
@@ -470,16 +494,18 @@ const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
 const pyhsicSphereUpdate = [];
 const sphereUpdate = [];
 const createPhysicsSphere = (radius, mass) => {
+	const position = { x: 0, y: 0, z: 0 };
+	position.x = Math.random() * (10 - 6 + 1) + 6;
+	position.y = Math.random() * (2 - 1 + 1) + 1;
+	position.z = Math.random() * (2 - 0 + 1) + 0;
 	const shape = new CANNON.Sphere(radius);
 	const physicsSpherebody = new CANNON.Body({
 		mass: mass,
 		shape: shape,
-		position: new CANNON.Vec3(8, 2, 0),
+		position: new CANNON.Vec3(position.x, position.y, position.z),
 		material: defaultMaterial,
 	});
 	physicsSpherebody.allowSleep = true;
-	// physicsSpherebody.sleepSpeedLimit = 1.0;
-	// physicsSpherebody.sleepTimeLimit = 0.1;
 	pyhsicSphereUpdate.push(physicsSpherebody);
 	world.addBody(physicsSpherebody);
 	// create three js sphere
@@ -490,7 +516,7 @@ const createPhysicsSphere = (radius, mass) => {
 	sphere.castShadow = true;
 	sphere.receiveShadow = false;
 	sphere.name = "sphere";
-	sphere.position.set(8, 2, 0);
+	sphere.position.set(position.x, position.y, position.z);
 	sphereUpdate.push(sphere);
 	scene.add(sphere);
 };
@@ -564,7 +590,7 @@ const camera = new THREE.PerspectiveCamera(
 	window.innerWidth / window.innerHeight
 );
 camera.focus = 0.2;
-camera.position.set(0, 1.6, 4);
+camera.position.set(8, 1.6, 4);
 camera.rotation.x = -0.4;
 
 const cameraFolder = gui.addFolder("Camera");
@@ -580,7 +606,7 @@ scene.add(camera);
 const controls = new OrbitControls(camera, canvas);
 
 controls.enableDamping = true;
-controls.target.set(0, 0, 0);
+controls.target.set(8, 0, 0);
 
 controls.minPolarAngle = Math.PI / 3;
 controls.maxPolarAngle = Math.PI / 2.3;
@@ -909,7 +935,7 @@ const tick = () => {
 
 	// UPDATE PHYSICS
 	world.step(1 / 60, deltaTime, 3);
-	// cannonDebugger.update();
+	cannonDebugger.update();
 	// update model physics
 	if (model) {
 		continueText.position.copy(continueTextBody.position);

@@ -76,6 +76,9 @@ video.load();
 video.loop = true;
 video.muted = true;
 // instruction text for first scene tv screen
+const thirdSceneTexture = textureLoader.load("./static/thirdSceneBake.jpg");
+thirdSceneTexture.flipY = false;
+thirdSceneTexture.encoding = THREE.sRGBEncoding;
 const instructionsTexture = textureLoader.load("./static/Drawing.jpeg");
 instructionsTexture.flipY = false;
 instructionsTexture.encoding = THREE.sRGBEncoding;
@@ -139,6 +142,9 @@ const bakedMaterial = new THREE.MeshBasicMaterial({
 	color: 0xffffff,
 });
 
+const thirdSceneMaterial = new THREE.MeshBasicMaterial({
+	map: thirdSceneTexture,
+});
 const screenOneMaterial = new THREE.MeshBasicMaterial({
 	map: instructionsTexture,
 	color: 0xffffff,
@@ -328,6 +334,19 @@ loader.load("./static/comp.glb", (gltf) => {
 	comp.position.set(4, 0, 0);
 	scene.add(comp);
 });
+let thirdScene;
+loader.load("./static/thirdScene.glb", (gltf) => {
+	thirdScene = gltf.scene;
+	console.log(thirdScene);
+	const material = thirdSceneMaterial;
+	thirdScene.traverse((child) => {
+		child.material = thirdSceneMaterial;
+		child.castShadow = true;
+		child.receiveShadow = true;
+	});
+	thirdScene.position.set(8, 0, 0);
+	scene.add(thirdScene);
+});
 
 // FONTS
 
@@ -446,6 +465,34 @@ const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
 	cube.position.set(x, y, z);
 	scene.add(cube);
 	return { physicsCubebody, cube };
+};
+
+const pyhsicSphereUpdate = [];
+const sphereUpdate = [];
+const createPhysicsSphere = (radius, mass) => {
+	const shape = new CANNON.Sphere(radius);
+	const physicsSpherebody = new CANNON.Body({
+		mass: mass,
+		shape: shape,
+		position: new CANNON.Vec3(8, 2, 0),
+		material: defaultMaterial,
+	});
+	physicsSpherebody.allowSleep = true;
+	// physicsSpherebody.sleepSpeedLimit = 1.0;
+	// physicsSpherebody.sleepTimeLimit = 0.1;
+	pyhsicSphereUpdate.push(physicsSpherebody);
+	world.addBody(physicsSpherebody);
+	// create three js sphere
+	const sphere = new THREE.Mesh(
+		new THREE.SphereBufferGeometry(radius, 16, 16),
+		new THREE.MeshStandardMaterial({ color: 0x08beff })
+	);
+	sphere.castShadow = true;
+	sphere.receiveShadow = false;
+	sphere.name = "sphere";
+	sphere.position.set(8, 2, 0);
+	sphereUpdate.push(sphere);
+	scene.add(sphere);
 };
 
 const cubeData = [
@@ -634,6 +681,23 @@ const backToFirstScene = () => {
 		ease: "power3.inOut",
 	});
 };
+
+const toThirdScene = () => {
+	gsap.to(controls.target, {
+		duration: 2,
+
+		x: 8,
+		y: 0,
+		z: 0,
+	});
+	gsap.to(camera.position, {
+		duration: 2,
+		x: 8,
+		y: 1.6,
+		z: 4,
+		ease: "power3.inOut",
+	});
+};
 const zoomToMac = () => {
 	gsap.to(camera.position, {
 		duration: 3,
@@ -679,6 +743,12 @@ document.addEventListener("keydown", (event) => {
 			video.play();
 			tvOn = true;
 		}
+	}
+	if (event.key === "ArrowRight") {
+		toThirdScene();
+	}
+	if (event.key === "ArrowUp") {
+		createPhysicsSphere(0.2, 1);
 	}
 });
 
@@ -866,6 +936,11 @@ const tick = () => {
 	physicsCube4.cube.quaternion.copy(physicsCube4.physicsCubebody.quaternion);
 	physicsCube5.cube.quaternion.copy(physicsCube5.physicsCubebody.quaternion);
 	physicsCube6.cube.quaternion.copy(physicsCube6.physicsCubebody.quaternion);
+
+	for (let i = 0; i < pyhsicSphereUpdate.length; i++) {
+		sphereUpdate[i].position.copy(pyhsicSphereUpdate[i].position);
+		sphereUpdate[i].quaternion.copy(pyhsicSphereUpdate[i].quaternion);
+	}
 
 	// UPDATE CONTROLS
 	const delta = clock.getDelta();

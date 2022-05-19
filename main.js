@@ -893,6 +893,18 @@ document.addEventListener("mouseup", (event) => {
 					break;
 			}
 		}
+		if (name === "sphere") {
+			const index = sphereUpdate.findIndex(
+				(sphere) => sphere === intersects[0].object
+			);
+			console.log(index);
+			pyhsicSphereUpdate[index].applyLocalForce(
+				new THREE.Vector3(7, 2, 0),
+				pyhsicSphereUpdate[index].position
+			);
+			pyhsicSphereUpdate[index].velocity.y = 4;
+			pyhsicSphereUpdate[index].velocity.z = -4;
+		}
 	}
 });
 

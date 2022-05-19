@@ -366,8 +366,8 @@ const defaultContactMaterial = new CANNON.ContactMaterial(
 	defaultMaterial,
 	defaultMaterial,
 	{
-		friction: 0.5,
-		restitution: 0.6,
+		friction: 0.7,
+		restitution: 0.9,
 	}
 );
 
@@ -456,6 +456,13 @@ const wallBody3 = new CANNON.Body({
 });
 wallBody3.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
 world.addBody(wallBody3);
+const wallBody4 = new CANNON.Body({
+	mass: 0,
+	position: new CANNON.Vec3(8, 0, 4),
+	shape: wallShape,
+});
+wallBody4.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2);
+world.addBody(wallBody4);
 
 // OBJECTS
 
@@ -774,7 +781,9 @@ document.addEventListener("keydown", (event) => {
 		toThirdScene();
 	}
 	if (event.key === "ArrowUp") {
-		createPhysicsSphere(0.2, 1);
+		// create random number between 0 and 0.2
+
+		createPhysicsSphere(Math.random() * 0.2, 1);
 	}
 });
 
@@ -935,7 +944,7 @@ const tick = () => {
 
 	// UPDATE PHYSICS
 	world.step(1 / 60, deltaTime, 3);
-	cannonDebugger.update();
+	// cannonDebugger.update();
 	// update model physics
 	if (model) {
 		continueText.position.copy(continueTextBody.position);

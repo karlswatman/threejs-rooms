@@ -428,7 +428,7 @@ const deskBody = new CANNON.Body({
 world.addBody(deskBody);
 
 // third scene walls
-const wallShape = new CANNON.Box(new CANNON.Vec3(2, 0.1, 2));
+const wallShape = new CANNON.Box(new CANNON.Vec3(20, 0.1, 20));
 const wallBody = new CANNON.Body({
 	mass: 0,
 	position: new CANNON.Vec3(8, 0, -0.5),
@@ -452,7 +452,7 @@ wallBody3.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
 world.addBody(wallBody3);
 const wallBody4 = new CANNON.Body({
 	mass: 0,
-	position: new CANNON.Vec3(8, 0, 4),
+	position: new CANNON.Vec3(8, 0, 3.5),
 	shape: wallShape,
 });
 wallBody4.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2);
@@ -531,11 +531,18 @@ const createPhysicsSphere = (radius, mass) => {
 	scene.add(sphere);
 };
 
-const ballSound = new Audio("./ballCollision.wav");
+const spawnSpheres = () => {
+	for (let i = 0; i < 50; i++) {
+		createPhysicsSphere(Math.random() * 0.2, Math.random());
+	}
+};
+
+const ballSound = new Audio("./ballCollision.m4a");
 
 const playHitSound = (collision) => {
 	const impactStrength = collision.contact.getImpactVelocityAlongNormal();
-	if (impactStrength > 1.5) {
+	if (impactStrength > 3) {
+		ballSound.volume = Math.random();
 		ballSound.currentTime = 0;
 		ballSound.play();
 	}
@@ -628,15 +635,15 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.target.set(8, 0, 0);
 
-controls.minPolarAngle = Math.PI / 3;
-controls.maxPolarAngle = Math.PI / 2.3;
+// controls.minPolarAngle = Math.PI / 3;
+// controls.maxPolarAngle = Math.PI / 2.3;
 
-controls.maxAzimuthAngle = Math.PI / 7.5;
-controls.minAzimuthAngle = -Math.PI / 7.5;
+// controls.maxAzimuthAngle = Math.PI / 7.5;
+// controls.minAzimuthAngle = -Math.PI / 7.5;
 
-controls.maxDistance = 4.3;
-controls.minDistance = 3.4;
-controls.zoomSpeed = 0.1;
+// controls.maxDistance = 4.3;
+// controls.minDistance = 3.4;
+// controls.zoomSpeed = 0.1;
 
 controls.rotateSpeed = 0.1;
 // RENDERER
@@ -729,6 +736,7 @@ const backToFirstScene = () => {
 };
 
 const toThirdScene = () => {
+	spawnSpheres();
 	gsap.to(controls.target, {
 		duration: 2,
 
@@ -792,11 +800,6 @@ document.addEventListener("keydown", (event) => {
 	}
 	if (event.key === "ArrowRight") {
 		toThirdScene();
-	}
-	if (event.key === "ArrowUp") {
-		// create random number between 0 and 0.2
-
-		createPhysicsSphere(Math.random() * 0.2, 1);
 	}
 });
 
@@ -864,7 +867,7 @@ document.addEventListener("mousedown", () => {
 			new THREE.Vector3(7, 2, 0),
 			pyhsicSphereUpdate[index].position
 		);
-		pyhsicSphereUpdate[index].velocity.y = 4;
+		pyhsicSphereUpdate[index].velocity.y = 5;
 		pyhsicSphereUpdate[index].velocity.z = -10;
 	}
 });

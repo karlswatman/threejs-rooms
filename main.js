@@ -508,7 +508,7 @@ const sphereMaterial = new THREE.MeshNormalMaterial({
 const createPhysicsSphere = (radius, mass) => {
 	const position = { x: 0, y: 0, z: 0 };
 	position.x = Math.random() * (10 - 6 + 1) + 6;
-	position.y = 0.5;
+	position.y = 0.1;
 	position.z = Math.random() * (2 - 0 + 1) + 0;
 	const shape = new CANNON.Sphere(radius);
 	const physicsSpherebody = new CANNON.Body({
@@ -519,6 +519,8 @@ const createPhysicsSphere = (radius, mass) => {
 		angularDamping: 0.7,
 	});
 	physicsSpherebody.allowSleep = true;
+	physicsSpherebody.sleepSpeedLimit = 0.5;
+	physicsSpherebody.sleepTimeLimit = 0.1;
 	pyhsicSphereUpdate.push(physicsSpherebody);
 	physicsSpherebody.addEventListener("collide", playHitSound);
 	world.addBody(physicsSpherebody);
@@ -807,6 +809,70 @@ document.addEventListener("keydown", (event) => {
 // turn on mass for text physics on first scene
 document.addEventListener("mousedown", () => {
 	mouseDown = true;
+	const name = intersects[0].object.name;
+	// cube interactions
+	const force = new THREE.Vector3(0, 0.1, 0);
+	if (/[cube]/g.test(name)) {
+		switch (name) {
+			case "cube1":
+				physicsCube1.physicsCubebody.applyLocalForce(
+					force,
+					physicsCube1.physicsCubebody.position
+				);
+				physicsCube1.physicsCubebody.velocity.y = 2;
+				// physicsCube1.physicsCubebody.velocity.x = 1;
+				break;
+			case "cube2":
+				physicsCube2.physicsCubebody.applyLocalForce(
+					force,
+					physicsCube2.physicsCubebody.position
+				);
+				physicsCube2.physicsCubebody.velocity.y = 2;
+				break;
+			case "cube3":
+				physicsCube3.physicsCubebody.applyLocalForce(
+					force,
+					physicsCube3.physicsCubebody.position
+				);
+				physicsCube3.physicsCubebody.velocity.y = 2;
+				break;
+			case "cube4":
+				physicsCube4.physicsCubebody.applyLocalForce(
+					force,
+					physicsCube4.physicsCubebody.position
+				);
+				physicsCube4.physicsCubebody.velocity.y = 2;
+				break;
+			case "cube5":
+				physicsCube5.physicsCubebody.applyLocalForce(
+					force,
+					physicsCube5.physicsCubebody.position
+				);
+				physicsCube5.physicsCubebody.velocity.y = 2;
+				break;
+			case "cube6":
+				physicsCube6.physicsCubebody.applyLocalForce(
+					force,
+					physicsCube6.physicsCubebody.position
+				);
+				physicsCube6.physicsCubebody.velocity.y = 2;
+				break;
+			default:
+				break;
+		}
+	}
+	if (name === "sphere") {
+		const index = sphereUpdate.findIndex(
+			(sphere) => sphere === intersects[0].object
+		);
+		console.log(index);
+		pyhsicSphereUpdate[index].applyLocalForce(
+			new THREE.Vector3(7, 2, 0),
+			pyhsicSphereUpdate[index].position
+		);
+		pyhsicSphereUpdate[index].velocity.y = 4;
+		pyhsicSphereUpdate[index].velocity.z = -10;
+	}
 });
 document.addEventListener("mouseup", (event) => {
 	mouseDown = false;
@@ -858,69 +924,6 @@ document.addEventListener("mouseup", (event) => {
 			hoverboard.visible = true;
 			cowboyHat.visible = false;
 			batmanHat.visible = false;
-		}
-		// cube interactions
-		const force = new THREE.Vector3(0, 0.1, 0);
-		if (/[cube]/g.test(name)) {
-			switch (name) {
-				case "cube1":
-					physicsCube1.physicsCubebody.applyLocalForce(
-						force,
-						physicsCube1.physicsCubebody.position
-					);
-					physicsCube1.physicsCubebody.velocity.y = 2;
-					// physicsCube1.physicsCubebody.velocity.x = 1;
-					break;
-				case "cube2":
-					physicsCube2.physicsCubebody.applyLocalForce(
-						force,
-						physicsCube2.physicsCubebody.position
-					);
-					physicsCube2.physicsCubebody.velocity.y = 2;
-					break;
-				case "cube3":
-					physicsCube3.physicsCubebody.applyLocalForce(
-						force,
-						physicsCube3.physicsCubebody.position
-					);
-					physicsCube3.physicsCubebody.velocity.y = 2;
-					break;
-				case "cube4":
-					physicsCube4.physicsCubebody.applyLocalForce(
-						force,
-						physicsCube4.physicsCubebody.position
-					);
-					physicsCube4.physicsCubebody.velocity.y = 2;
-					break;
-				case "cube5":
-					physicsCube5.physicsCubebody.applyLocalForce(
-						force,
-						physicsCube5.physicsCubebody.position
-					);
-					physicsCube5.physicsCubebody.velocity.y = 2;
-					break;
-				case "cube6":
-					physicsCube6.physicsCubebody.applyLocalForce(
-						force,
-						physicsCube6.physicsCubebody.position
-					);
-					physicsCube6.physicsCubebody.velocity.y = 2;
-					break;
-				default:
-					break;
-			}
-		}
-		if (name === "sphere") {
-			const index = sphereUpdate.findIndex(
-				(sphere) => sphere === intersects[0].object
-			);
-			console.log(index);
-			pyhsicSphereUpdate[index].applyLocalForce(
-				new THREE.Vector3(7, 2, 0),
-				pyhsicSphereUpdate[index].position
-			);
-			pyhsicSphereUpdate[index].velocity.y = 4;
-			pyhsicSphereUpdate[index].velocity.z = -4;
 		}
 	}
 });

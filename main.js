@@ -76,25 +76,25 @@ video.load();
 video.loop = true;
 video.muted = true;
 // instruction text for first scene tv screen
-const thirdSceneTexture = textureLoader.load("./static/thirdSceneBake.jpg");
+const thirdSceneTexture = textureLoader.load("./thirdSceneBake.jpg");
 thirdSceneTexture.flipY = false;
 thirdSceneTexture.encoding = THREE.sRGBEncoding;
-const instructionsTexture = textureLoader.load("./static/Drawing.jpeg");
+const instructionsTexture = textureLoader.load("./Drawing.jpeg");
 instructionsTexture.flipY = false;
 instructionsTexture.encoding = THREE.sRGBEncoding;
-const macInstructionsTexture = textureLoader.load("./static/macAccess.jpeg");
+const macInstructionsTexture = textureLoader.load("./macAccess.jpeg");
 macInstructionsTexture.flipY = false;
 macInstructionsTexture.encoding = THREE.sRGBEncoding;
 // baked texture for first scene
-const bakedTexture = new THREE.TextureLoader().load("./static/testbake.jpg");
+const bakedTexture = new THREE.TextureLoader().load("./testbake.jpg");
 bakedTexture.flipY = false;
 bakedTexture.encoding = THREE.sRGBEncoding;
 
-const compTexture = new THREE.TextureLoader().load("./static/compbake.jpg");
+const compTexture = new THREE.TextureLoader().load("./compbake.jpg");
 compTexture.flipY = false;
 compTexture.encoding = THREE.sRGBEncoding;
 
-const macTexture = new THREE.TextureLoader().load("./static/macbake.jpg");
+const macTexture = new THREE.TextureLoader().load("./macbake.jpg");
 macTexture.flipY = false;
 macTexture.encoding = THREE.sRGBEncoding;
 
@@ -105,34 +105,28 @@ macScreenTexture.magFilter = THREE.LinearFilter;
 macScreenTexture.flipY = false;
 
 const framesAndTextTexture = new THREE.TextureLoader().load(
-	"./static/framesandtext.jpg"
+	"./framesandtext.jpg"
 );
 framesAndTextTexture.flipY = false;
 framesAndTextTexture.encoding = THREE.sRGBEncoding;
 
-const poster1Texture = new THREE.TextureLoader().load(
-	"./static/isleofdogs.jpeg"
-);
+const poster1Texture = new THREE.TextureLoader().load("./isleofdogs.jpeg");
 poster1Texture.flipY = false;
 poster1Texture.encoding = THREE.sRGBEncoding;
 
-const poster2Texture = new THREE.TextureLoader().load("./static/batman.jpeg");
+const poster2Texture = new THREE.TextureLoader().load("./batman.jpeg");
 poster2Texture.flipY = false;
 poster2Texture.encoding = THREE.sRGBEncoding;
 
-const poster3Texture = new THREE.TextureLoader().load("./static/django.jpeg");
+const poster3Texture = new THREE.TextureLoader().load("./django.jpeg");
 poster3Texture.flipY = false;
 poster3Texture.encoding = THREE.sRGBEncoding;
 
-const poster4Texture = new THREE.TextureLoader().load(
-	"./static/backtothefuture.jpeg"
-);
+const poster4Texture = new THREE.TextureLoader().load("./backtothefuture.jpeg");
 poster4Texture.flipY = false;
 poster4Texture.encoding = THREE.sRGBEncoding;
 
-const hoverboardTexture = new THREE.TextureLoader().load(
-	"./static/hoverboard.png"
-);
+const hoverboardTexture = new THREE.TextureLoader().load("./hoverboard.png");
 
 // MATERIALS
 
@@ -222,7 +216,7 @@ let batmanHat;
 let cowboyHat;
 let hoverboard;
 let floor;
-loader.load("./static/test.glb", (gltf) => {
+loader.load("./test.glb", (gltf) => {
 	model = gltf.scene;
 	console.log(model);
 	model.traverse((child) => {
@@ -292,7 +286,7 @@ let backButton;
 let secondContinue;
 let macScreen;
 let leaveButton;
-loader.load("./static/comp.glb", (gltf) => {
+loader.load("./comp.glb", (gltf) => {
 	comp = gltf.scene;
 	console.log(comp);
 	comp.traverse((child) => {
@@ -335,7 +329,7 @@ loader.load("./static/comp.glb", (gltf) => {
 	scene.add(comp);
 });
 let thirdScene;
-loader.load("./static/thirdScene.glb", (gltf) => {
+loader.load("./thirdScene.glb", (gltf) => {
 	thirdScene = gltf.scene;
 	console.log(thirdScene);
 	const material = thirdSceneMaterial;
@@ -500,7 +494,7 @@ const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
 
 const pyhsicSphereUpdate = [];
 const sphereUpdate = [];
-const sphereTexture = new THREE.TextureLoader().load("./static/matcap.png");
+const sphereTexture = new THREE.TextureLoader().load("./matcap.png");
 const sphereMaterial = new THREE.MeshNormalMaterial({
 	// color: 0x08beff,
 	// matcap: sphereTexture,
@@ -537,7 +531,7 @@ const createPhysicsSphere = (radius, mass) => {
 	scene.add(sphere);
 };
 
-const ballSound = new Audio("./static/ballCollision.wav");
+const ballSound = new Audio("./ballCollision.wav");
 
 const playHitSound = (collision) => {
 	const impactStrength = collision.contact.getImpactVelocityAlongNormal();

@@ -500,10 +500,15 @@ const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
 
 const pyhsicSphereUpdate = [];
 const sphereUpdate = [];
+const sphereTexture = new THREE.TextureLoader().load("./static/matcap.png");
+const sphereMaterial = new THREE.MeshNormalMaterial({
+	// color: 0x08beff,
+	// matcap: sphereTexture,
+});
 const createPhysicsSphere = (radius, mass) => {
 	const position = { x: 0, y: 0, z: 0 };
 	position.x = Math.random() * (10 - 6 + 1) + 6;
-	position.y = Math.random() * (2 - 1 + 1) + 1;
+	position.y = 0.5;
 	position.z = Math.random() * (2 - 0 + 1) + 0;
 	const shape = new CANNON.Sphere(radius);
 	const physicsSpherebody = new CANNON.Body({
@@ -511,14 +516,16 @@ const createPhysicsSphere = (radius, mass) => {
 		shape: shape,
 		position: new CANNON.Vec3(position.x, position.y, position.z),
 		material: defaultMaterial,
+		angularDamping: 0.7,
 	});
 	physicsSpherebody.allowSleep = true;
 	pyhsicSphereUpdate.push(physicsSpherebody);
+	physicsSpherebody.addEventListener("collide", playHitSound);
 	world.addBody(physicsSpherebody);
 	// create three js sphere
 	const sphere = new THREE.Mesh(
 		new THREE.SphereBufferGeometry(radius, 16, 16),
-		new THREE.MeshStandardMaterial({ color: 0x08beff })
+		sphereMaterial
 	);
 	sphere.castShadow = true;
 	sphere.receiveShadow = false;
@@ -526,6 +533,16 @@ const createPhysicsSphere = (radius, mass) => {
 	sphere.position.set(position.x, position.y, position.z);
 	sphereUpdate.push(sphere);
 	scene.add(sphere);
+};
+
+const ballSound = new Audio("./static/ballCollision.wav");
+
+const playHitSound = (collision) => {
+	const impactStrength = collision.contact.getImpactVelocityAlongNormal();
+	if (impactStrength > 1.5) {
+		ballSound.currentTime = 0;
+		ballSound.play();
+	}
 };
 
 const cubeData = [
@@ -916,7 +933,7 @@ document.addEventListener("mousemove", (event) => {
 		clearTimeout(mouseTimeout);
 		mouseTimeout = setTimeout(() => {
 			mouseMoving = false;
-		}, 500);
+		}, 200);
 	}
 	mouseX = event.clientX - windowHalfX;
 	mouseY = event.clientY - windowHalfY;

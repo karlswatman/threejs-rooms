@@ -460,6 +460,17 @@ world.addBody(wallBody4);
 
 // OBJECTS
 
+const cubeSound = new Audio("./cubeCollision.m4a");
+
+const playCubeSound = (collision) => {
+	const impactStrength = collision.contact.getImpactVelocityAlongNormal();
+	if (impactStrength > 1) {
+		cubeSound.volume = 0.5;
+		cubeSound.currentTime = 0;
+		cubeSound.play();
+	}
+};
+
 const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
 	const shape = new CANNON.Box(
 		new CANNON.Vec3(width / 2, height / 2, depth / 2)
@@ -469,7 +480,9 @@ const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
 		shape: shape,
 		position: new CANNON.Vec3(x, y, z),
 	});
-
+	physicsCubebody.addEventListener("collide", (e) => {
+		playCubeSound(e);
+	});
 	physicsCubebody.allowSleep = true;
 	physicsCubebody.sleepSpeedLimit = 1.0;
 	physicsCubebody.sleepTimeLimit = 0.1;
@@ -489,6 +502,7 @@ const createPhysicsCube = (x, y, z, width, height, depth, mass, name) => {
 	cube.name = name;
 	cube.position.set(x, y, z);
 	scene.add(cube);
+
 	return { physicsCubebody, cube };
 };
 

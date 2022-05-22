@@ -13,6 +13,7 @@ import { MeshBasicMaterial } from "three";
 // DEBUG
 const gui = new dat.GUI();
 gui.close();
+gui.hide();
 
 // STATS
 

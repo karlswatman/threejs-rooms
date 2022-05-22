@@ -1,6 +1,6 @@
-# Gimme Gandalf
+# Three.js Portfolio
 
-A text placeholder generator using Gandalf quotes from the LOTR movies. Alternative to Lorem Ipsum.
+testing the potential of three js for an upcoming project, will possibly make my main portfolio page
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/82eab7be-292c-4d50-a55b-8166979d3965/deploy-status)](https://app.netlify.com/sites/threejs-rooms/deploys)
 

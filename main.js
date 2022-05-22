@@ -811,7 +811,7 @@ document.addEventListener("mousedown", () => {
 					physicsCube1.physicsCubebody.position
 				);
 				physicsCube1.physicsCubebody.velocity.y = 2;
-				// physicsCube1.physicsCubebody.velocity.x = 1;
+				physicsCube1.physicsCubebody.velocity.z = -0.5;
 				break;
 			case "cube2":
 				physicsCube2.physicsCubebody.applyLocalForce(
@@ -819,6 +819,7 @@ document.addEventListener("mousedown", () => {
 					physicsCube2.physicsCubebody.position
 				);
 				physicsCube2.physicsCubebody.velocity.y = 2;
+				physicsCube2.physicsCubebody.velocity.z = -0.5;
 				break;
 			case "cube3":
 				physicsCube3.physicsCubebody.applyLocalForce(
@@ -826,6 +827,7 @@ document.addEventListener("mousedown", () => {
 					physicsCube3.physicsCubebody.position
 				);
 				physicsCube3.physicsCubebody.velocity.y = 2;
+				physicsCube3.physicsCubebody.velocity.z = -0.5;
 				break;
 			case "cube4":
 				physicsCube4.physicsCubebody.applyLocalForce(
@@ -833,6 +835,7 @@ document.addEventListener("mousedown", () => {
 					physicsCube4.physicsCubebody.position
 				);
 				physicsCube4.physicsCubebody.velocity.y = 2;
+				physicsCube1.physicsCubebody.velocity.z = -0.5;
 				break;
 			case "cube5":
 				physicsCube5.physicsCubebody.applyLocalForce(
@@ -840,6 +843,7 @@ document.addEventListener("mousedown", () => {
 					physicsCube5.physicsCubebody.position
 				);
 				physicsCube5.physicsCubebody.velocity.y = 2;
+				physicsCube1.physicsCubebody.velocity.z = -0.5;
 				break;
 			case "cube6":
 				physicsCube6.physicsCubebody.applyLocalForce(
@@ -847,6 +851,7 @@ document.addEventListener("mousedown", () => {
 					physicsCube6.physicsCubebody.position
 				);
 				physicsCube6.physicsCubebody.velocity.y = 2;
+				physicsCube1.physicsCubebody.velocity.z = -0.5;
 				break;
 			default:
 				break;

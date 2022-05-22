@@ -617,7 +617,7 @@ const camera = new THREE.PerspectiveCamera(
 	window.innerWidth / window.innerHeight
 );
 camera.focus = 0.2;
-camera.position.set(8, 1.6, 4);
+camera.position.set(0, 1.6, 4);
 camera.rotation.x = -0.4;
 
 const cameraFolder = gui.addFolder("Camera");
@@ -633,17 +633,17 @@ scene.add(camera);
 const controls = new OrbitControls(camera, canvas);
 
 controls.enableDamping = true;
-controls.target.set(8, 0, 0);
+controls.target.set(0, 0, 0);
 
-// controls.minPolarAngle = Math.PI / 3;
-// controls.maxPolarAngle = Math.PI / 2.3;
+controls.minPolarAngle = Math.PI / 3;
+controls.maxPolarAngle = Math.PI / 2.3;
 
-// controls.maxAzimuthAngle = Math.PI / 7.5;
-// controls.minAzimuthAngle = -Math.PI / 7.5;
+controls.maxAzimuthAngle = Math.PI / 7.5;
+controls.minAzimuthAngle = -Math.PI / 7.5;
 
-// controls.maxDistance = 4.3;
-// controls.minDistance = 3.4;
-// controls.zoomSpeed = 0.1;
+controls.maxDistance = 4.3;
+controls.minDistance = 3.4;
+controls.zoomSpeed = 0.1;
 
 controls.rotateSpeed = 0.1;
 // RENDERER
@@ -783,9 +783,6 @@ let mouseMoving = false;
 let mouseDown = false;
 let mouseTimeout;
 document.addEventListener("keydown", (event) => {
-	if (event.key === "ArrowLeft") {
-		backToFirstScene();
-	}
 	if (event.key === "Enter") {
 		if (tvOn) {
 			screen.material.map = instructionsTexture;
@@ -797,9 +794,6 @@ document.addEventListener("keydown", (event) => {
 			video.play();
 			tvOn = true;
 		}
-	}
-	if (event.key === "ArrowRight") {
-		toThirdScene();
 	}
 });
 
@@ -904,6 +898,9 @@ document.addEventListener("mouseup", (event) => {
 		}
 		if (name === "macScreen") {
 			window.open("https://karl-swatman.netlify.app/", "_blank");
+		}
+		if (name === "secondContinue") {
+			toThirdScene();
 		}
 		console.log(intersects);
 		// change hat

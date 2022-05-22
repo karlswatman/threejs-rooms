@@ -6,7 +6,7 @@ testing the potential of three js for an upcoming project, will possibly make my
 
 # Visuals
 
-<video src='./demo.mov' />
+<img src='./demo.mov' />
 
 # Installation
 

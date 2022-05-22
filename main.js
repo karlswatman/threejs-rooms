@@ -646,6 +646,7 @@ scene.add(camera);
 // CONTROLS;
 const controls = new OrbitControls(camera, canvas);
 
+controls.enablePan = false;
 controls.enableDamping = true;
 controls.target.set(0, 0, 0);
 
